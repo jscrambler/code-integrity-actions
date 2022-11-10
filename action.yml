@@ -1,0 +1,9 @@
+name: 'Jscrambler'
+description: 'Protect your JavaScript application against automated abuse, piracy, tampering, and code theft with enterprise-grade obfuscation, code locks, and self-defensive techniques'
+author: 'Jscrambler'
+branding:
+  icon: shield
+  color: blue
+runs:
+  using: 'node16'
+  main: 'main.js'

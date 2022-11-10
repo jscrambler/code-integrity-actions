@@ -1,0 +1,29 @@
+{
+  "name": "code-integrity-actions",
+  "version": "0.0.0",
+  "description": "Protect your JavaScript application against automated abuse, piracy, tampering, and code theft with enterprise-grade obfuscation, code locks, and self-defensive techniques",
+  "scripts": {
+    "build": "find . -mindepth 2 -name action.yml -exec echo '** Build {} **' \\; -execdir ncc build src/index.ts --license licenses.txt -o dist \\;",
+    "test": "jest"
+  },
+  "author": "Jscrambler <code@jscrambler.com>",
+  "license": "ISC",
+  "dependencies": {
+    "@actions/core": "1.10.0",
+    "jscrambler": "6.2.8"
+  },
+  "files": [
+    "main.js",
+    "**/action.yml",
+    "**/dist"
+  ],
+  "devDependencies": {
+    "@types/jest": "28.1.8",
+    "@tsconfig/node16": "1.0.3",
+    "@vercel/ncc": "0.34.0",
+    "typescript": "4.8.4",
+    "jest": "28.1.3",
+    "ts-jest": "28.0.8"
+  },
+  "private": true
+}

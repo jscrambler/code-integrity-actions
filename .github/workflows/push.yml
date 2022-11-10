@@ -56,10 +56,16 @@ jobs:
     needs: [ unit-tests, protect-e2e-tests ]
     if: github.ref_type == 'tag'
     steps:
+      - name: Parse Tag
+        id: get_version
+        uses: battila7/get-version-action@v2
       - uses: technote-space/release-github-actions@v8
         with:
+          COMMIT_MESSAGE: Built with Jscrambler ${{ steps.get_version.outputs.version }}
           DELETE_NODE_MODULES: true
           CLEAN_TARGETS: ".[!.]*,__tests__,docs,**/src,*.[jt]s,*.[mc][jt]s,jscrambler.json,tsconfig.json,package-lock.json,*.lock,*.yml,*.yaml"
       - uses: ncipollo/release-action@v1
         with:
           draft: true
+          generateReleaseNotes: true
+          allowUpdates: true

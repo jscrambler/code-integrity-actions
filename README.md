@@ -33,7 +33,7 @@ Jscrambler generates a `protection-id` as an output
 
 ## Usage
 
-Place the [Jscrambler Settings File]([Jscrambler Settings File](https://docs.jscrambler.com/code-integrity/getting-started#download-your-transformations-and-use-with-api)) - jscrambler.json - into the root of your GitHub Application Repository, and then add the following steps to your GitHub Workflow:  
+Place the [Jscrambler Settings File](https://docs.jscrambler.com/code-integrity/getting-started#download-your-transformations-and-use-with-api) - jscrambler.json - into the root of your GitHub Application Repository, and then add the following steps to your GitHub Workflow:  
 
 ```yaml
 steps:

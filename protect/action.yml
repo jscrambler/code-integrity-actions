@@ -1,0 +1,57 @@
+name: 'Jscrambler'
+description: 'Protect your JavaScript application against automated abuse, piracy, tampering, and code theft with enterprise-grade obfuscation, code locks, and self-defensive techniques'
+author: 'Jscrambler'
+branding:
+  icon: shield
+  color: blue
+inputs:
+  secret-key:
+    description: 'User Secret Key'
+    required: false
+  access-key:
+    description: 'User Access Key'
+    required: false
+  jscrambler-config-path:
+    description: 'Path to jscrambler configuration'
+    default: '.jscramblerrc'
+    required: false
+  application-id:
+    description: 'User Application Id'
+    required: false
+  files-src:
+    description: 'List of file sources (glob patterns allowed)'
+    required: false
+  files-dest:
+    description: 'Output directory/file'
+    required: false
+  jscrambler-version:
+    description: 'Jscramber Version'
+    required: false
+  protocol:
+    description: 'Jscrambler API protocol'
+    required: false
+  host:
+    description: 'Jscrambler API host'
+    required: false
+  port:
+    description: 'Jscrambler API port'
+    required: false
+  base-path:
+    description: 'Jscrambler API base path'
+    required: false
+  symbol-table-output-path:
+    description: 'Symbol table Output Path'
+    required: false
+  # DEBUG
+  source-maps-output-path:
+    description: 'Source Maps Output Path -- The source maps are stored as files inside a jscramblerSourceMaps folder here'
+    required: false
+  debug-mode:
+    description: 'Set Debug Mode'
+    required: false
+outputs:
+  protection-id:
+    description: 'Protection Id'
+runs:
+  using: 'node16'
+  main: 'dist/index.js'

@@ -60,3 +60,6 @@ jobs:
         with:
           DELETE_NODE_MODULES: true
           CLEAN_TARGETS: ".[!.]*,__tests__,docs,**/src,*.[jt]s,*.[mc][jt]s,jscrambler.json,tsconfig.json,package-lock.json,*.lock,*.yml,*.yaml"
+      - uses: ncipollo/release-action@v1
+        with:
+          draft: true

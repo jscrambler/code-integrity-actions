@@ -68,3 +68,14 @@ jobs:
         with:
           draft: true
           allowUpdates: true
+      - name: Send mail
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SMTP }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: [code-integrity-actions - Action Required] Publish to the marketplace ${{ steps.get_version.outputs.version }}
+          to: vitor.veiga@jscrambler.com
+          from: noreply@jscrambler.com
+          # Optional plain body:
+          body: Publish to the marketplace the code-integrity-actions release ${{ steps.get_version.outputs.version }} - https://github.com/jscrambler/code-integrity-actions/releases

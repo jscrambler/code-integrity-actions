@@ -1,0 +1,62 @@
+on: [push]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    name: Unit Tests
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Install
+        run: npm i
+      - name: Test
+        run: npm t
+
+  protect-e2e-tests:
+    runs-on: ubuntu-latest
+    name: Protect e2e Test
+    environment: production
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Install and Build
+        run: npm i && npm run build
+      - name: Test
+        id: jscrambler
+        uses: ./protect
+        with:
+          # USER_ID: 19983
+          application-id: ${{ secrets.JSCRAMBLER_APPLICATION_ID }}
+          secret-key: ${{ secrets.JSCRAMBLER_SECRET_KEY }}
+          access-key: ${{ secrets.JSCRAMBLER_ACCESS_KEY }}
+          jscrambler-config-path: jscrambler.json
+          files-src: |
+            protect/dist/index.js
+          files-dest: protect/dist-obfuscated/
+          source-maps-output-path: protect/dist-extra/
+          symbol-table-output-path: protect/dist-extra/symbols/
+      - name: Check protection-id
+        if: "${{ steps.jscrambler.outputs.protection-id == '' }}"
+        run: exit 1
+      - name: Check Generated Files
+        uses: andstor/file-existence-action@v2
+        with:
+          files: "protect/dist-obfuscated/protect/dist/index.js, protect/dist-extra/jscramblerSourceMaps/protect/dist/index.js.map, protect/dist-extra/symbols/*_symbolTable.json"
+          fail: true
+          
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: [ unit-tests, protect-e2e-tests ]
+    if: github.ref_type == 'tag'
+    steps:
+      - uses: technote-space/release-github-actions@v8
+        with:
+          DELETE_NODE_MODULES: true
+          CLEAN_TARGETS: ".[!.]*,__tests__,docs,**/src,*.[jt]s,*.[mc][jt]s,jscrambler.json,tsconfig.json,package-lock.json,*.lock,*.yml,*.yaml"

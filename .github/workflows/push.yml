@@ -75,10 +75,8 @@ jobs:
           server_address: ${{ secrets.MAIL_SMTP }}
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "[Action Required] Publish to the marketplace ${{ steps.get_version.outputs.version }}"
+          subject: "[Action Required] Publish release ${{ steps.get_version.outputs.version }}"
           to: vitor.veiga@jscrambler.com
           from: "code-integrity-actions"
           # Optional plain body:
-          body: "Publish to the marketplace the code-integrity-actions release ${{ steps.get_version.outputs.version }} - https://github.com/jscrambler/code-integrity-actions/releases"
-      - name: echo
-        run: "echo 'url: ${{ steps.release.outputs.html_url }}, id: ${{ steps.release.outputs.id }}'"
+          body: "Publish code-integrity-actions release ${{ steps.get_version.outputs.version }} to the marketplace. Click [here](${{ steps.release.outputs.html_url }})"

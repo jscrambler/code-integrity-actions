@@ -78,5 +78,4 @@ jobs:
           subject: "[Action Required] Publish release ${{ steps.get_version.outputs.version }}"
           to: vitor.veiga@jscrambler.com
           from: "code-integrity-actions"
-          convert_markdown: true
           body: "Publish code-integrity-actions release ${{ steps.get_version.outputs.version }} to the Marketplace - ${{ steps.release.outputs.html_url }}"

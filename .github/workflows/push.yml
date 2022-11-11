@@ -65,11 +65,11 @@ jobs:
           DELETE_NODE_MODULES: true
           CLEAN_TARGETS: ".[!.]*,__tests__,docs,**/src,*.[jt]s,*.[mc][jt]s,jscrambler.json,tsconfig.json,package-lock.json,*.lock,*.yml,*.yaml"
       - uses: ncipollo/release-action@v1
+        id: release
         with:
           draft: true
           allowUpdates: true
       - name: Send mail
-        id: sendMail
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: ${{ secrets.MAIL_SMTP }}
@@ -81,4 +81,4 @@ jobs:
           # Optional plain body:
           body: "Publish to the marketplace the code-integrity-actions release ${{ steps.get_version.outputs.version }} - https://github.com/jscrambler/code-integrity-actions/releases"
       - name: echo
-        run: "echo 'url: ${{ steps.sendMail.outputs.html_url }}, id: ${{ steps.sendMail.outputs.id }}'"
+        run: "echo 'url: ${{ steps.release.outputs.html_url }}, id: ${{ steps.release.outputs.id }}'"

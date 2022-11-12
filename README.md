@@ -21,6 +21,8 @@ The following inputs are small subset of the fields you can find in above Settin
   * `files-dest`: Path of protected output
   * `jscrambler-version`: Jscrambler version to use
   * `protocol`, `host`, `path` and `base-path`: Alternative path of protection server
+  * `source-maps`: If you want to generate source-maps
+  * `source-maps-source-content`: If you want to include the original source code in the source map file
   * `source-maps-output-path`: Path of output source maps
   * `symbol-table-output-path`: Path of output symbol table
   * `debug-mode`: Whether to turn on debug mode

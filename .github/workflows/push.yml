@@ -39,6 +39,7 @@ jobs:
           files-src: |
             protect/dist/index.js
           files-dest: protect/dist-obfuscated/
+          source-maps: true
           source-maps-output-path: protect/dist-extra/
           symbol-table-output-path: protect/dist-extra/symbols/
       - name: Check protection-id
@@ -49,6 +50,12 @@ jobs:
         with:
           files: "protect/dist-obfuscated/protect/dist/index.js, protect/dist-extra/jscramblerSourceMaps/protect/dist/index.js.map, protect/dist-extra/symbols/*_symbolTable.json"
           fail: true
+      - name: Upload source maps
+        uses: actions/upload-artifact@v3
+        with:
+          name: source-maps
+          path: dist-extra/jscramblerSourceMaps/
+          retention-days: 1
           
   release:
     name: Release

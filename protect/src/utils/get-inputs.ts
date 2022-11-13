@@ -84,7 +84,7 @@ export default function getInputs(): InputParams {
     port: getStringParam('port'),
     basePath: getStringParam('base-path'),
     sourceMaps: getBooleanParam('source-maps'),
-    sourceMapsSourceContent: getBooleanParam('source-maps-sources-content'),
+    sourceMapsSourceContent: getBooleanParam('source-maps-source-content'),
     sourceMapsOutputPath: getStringParam('source-maps-output-path'),
     symbolTableOutputPath: getStringParam('symbol-table-output-path'),
     debugMode: getBooleanParam('debug-mode'),

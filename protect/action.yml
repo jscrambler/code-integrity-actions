@@ -49,7 +49,7 @@ inputs:
   source-maps-source-content:
     description: 'If you want to include the original source code in the source map file'
     required: false
-    default: "true"
+    default: true
   source-maps-output-path:
     description: 'Source Maps Output Path -- The source maps are stored as files inside a jscramblerSourceMaps folder here'
     required: false

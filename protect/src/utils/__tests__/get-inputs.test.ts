@@ -138,6 +138,8 @@ describe('getInputParams', function () {
       sourceMapsOutputPath: 'source-maps-output-path',
       symbolTableOutputPath: 'symbol-table-output-path',
       debugMode: true,
+      sourceMaps: true,
+      sourceMapsSourceContent: true,
       proxy: {
         host: 'proxy-host',
         port: 'proxy-port',

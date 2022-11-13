@@ -11,6 +11,7 @@ jest.mock('fs/promises');
 function completeConfig(params: Partial<InputParams>): InputParams {
   return {
     keys: {},
+    sourceMapsSourceContent: true,
     ...params,
   };
 }
@@ -59,6 +60,7 @@ test('passed parameters override config parameters', async function () {
 test('specifies source maps output', async function () {
   const config: Partial<InputParams> = {
     sourceMapsOutputPath: 'output.json',
+    sourceMaps: true,
   };
   const {finalParams, sourceMapsOutputPath} = await buildParamsFromInputs(completeConfig(config));
   expect(finalParams.sourceMapsOutputPath).toBe(undefined);
@@ -66,6 +68,18 @@ test('specifies source maps output', async function () {
     sourceContent: true,
   });
   expect(sourceMapsOutputPath).toBe('output.json');
+});
+
+test('specifies source maps without source content', async function () {
+  const config: Partial<InputParams> = {
+    sourceMaps: true,
+    sourceMapsSourceContent: false,
+  };
+  const {finalParams, sourceMapsOutputPath} = await buildParamsFromInputs(completeConfig(config));
+  expect(finalParams.sourceMapsOutputPath).toBe(undefined);
+  expect(finalParams.sourceMaps).toStrictEqual({
+    sourceContent: false,
+  });
 });
 
 test('specifies symbol table output', async function () {

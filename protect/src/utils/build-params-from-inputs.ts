@@ -13,7 +13,7 @@ export default async function buildParamsFromInputs(params: InputParams) {
     finalParams = params;
   }
 
-  const {sourceMaps, sourceMapsSourceContent} = params;
+  const {sourceMapsOutputPath, symbolTableOutputPath, sourceMaps, sourceMapsSourceContent} = params;
 
   if (sourceMaps) {
     finalParams.sourceMaps = {

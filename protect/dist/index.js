@@ -7302,10 +7302,10 @@ module.exports = function (exec, SKIP_CLOSING) {
 /***/ 45347:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-var uncurryThisRaw = __nccwpck_require__(99867);
+var uncurryThis = __nccwpck_require__(68610);
 
-var toString = uncurryThisRaw({}.toString);
-var stringSlice = uncurryThisRaw(''.slice);
+var toString = uncurryThis({}.toString);
+var stringSlice = uncurryThis(''.slice);
 
 module.exports = function (it) {
   return stringSlice(toString(it), 8, -1);
@@ -8766,7 +8766,7 @@ module.exports = function (exec) {
 
 // TODO: Remove from `core-js@4` since it's moved to entry points
 __nccwpck_require__(16426);
-var uncurryThis = __nccwpck_require__(68610);
+var uncurryThis = __nccwpck_require__(87429);
 var defineBuiltIn = __nccwpck_require__(56986);
 var regexpExec = __nccwpck_require__(48146);
 var fails = __nccwpck_require__(64222);
@@ -8916,7 +8916,7 @@ module.exports = typeof Reflect == 'object' && Reflect.apply || (NATIVE_BIND ? c
 /***/ 68978:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-var uncurryThis = __nccwpck_require__(68610);
+var uncurryThis = __nccwpck_require__(87429);
 var aCallable = __nccwpck_require__(43466);
 var NATIVE_BIND = __nccwpck_require__(27932);
 
@@ -9027,7 +9027,23 @@ module.exports = {
 
 /***/ }),
 
-/***/ 99867:
+/***/ 87429:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var classofRaw = __nccwpck_require__(45347);
+var uncurryThis = __nccwpck_require__(68610);
+
+module.exports = function (fn) {
+  // Nashorn bug:
+  //   https://github.com/zloirock/core-js/issues/1128
+  //   https://github.com/zloirock/core-js/issues/1130
+  if (classofRaw(fn) === 'Function') return uncurryThis(fn);
+};
+
+
+/***/ }),
+
+/***/ 68610:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var NATIVE_BIND = __nccwpck_require__(27932);
@@ -9040,22 +9056,6 @@ module.exports = NATIVE_BIND ? uncurryThisWithBind : function (fn) {
   return function () {
     return call.apply(fn, arguments);
   };
-};
-
-
-/***/ }),
-
-/***/ 68610:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var classofRaw = __nccwpck_require__(45347);
-var uncurryThisRaw = __nccwpck_require__(99867);
-
-module.exports = function (fn) {
-  // Nashorn bug:
-  //   https://github.com/zloirock/core-js/issues/1128
-  //   https://github.com/zloirock/core-js/issues/1130
-  if (classofRaw(fn) === 'Function') return uncurryThisRaw(fn);
 };
 
 
@@ -12412,10 +12412,10 @@ var store = __nccwpck_require__(96091);
 (module.exports = function (key, value) {
   return store[key] || (store[key] = value !== undefined ? value : {});
 })('versions', []).push({
-  version: '3.26.0',
+  version: '3.26.1',
   mode: IS_PURE ? 'pure' : 'global',
   copyright: '© 2014-2022 Denis Pushkarev (zloirock.ru)',
-  license: 'https://github.com/zloirock/core-js/blob/v3.26.0/LICENSE',
+  license: 'https://github.com/zloirock/core-js/blob/v3.26.1/LICENSE',
   source: 'https://github.com/zloirock/core-js'
 });
 
@@ -14086,7 +14086,7 @@ $({ target: 'ArrayBuffer', stat: true, forced: !NATIVE_ARRAY_BUFFER_VIEWS }, {
 "use strict";
 
 var $ = __nccwpck_require__(2374);
-var uncurryThis = __nccwpck_require__(68610);
+var uncurryThis = __nccwpck_require__(87429);
 var fails = __nccwpck_require__(64222);
 var ArrayBufferModule = __nccwpck_require__(22214);
 var anObject = __nccwpck_require__(19232);
@@ -14541,7 +14541,7 @@ addToUnscopables('includes');
 
 /* eslint-disable es/no-array-prototype-indexof -- required for testing */
 var $ = __nccwpck_require__(2374);
-var uncurryThis = __nccwpck_require__(68610);
+var uncurryThis = __nccwpck_require__(87429);
 var $indexOf = (__nccwpck_require__(35380).indexOf);
 var arrayMethodIsStrict = __nccwpck_require__(81570);
 
@@ -18926,7 +18926,7 @@ $({ target: 'String', proto: true }, {
 "use strict";
 
 var $ = __nccwpck_require__(2374);
-var uncurryThis = __nccwpck_require__(68610);
+var uncurryThis = __nccwpck_require__(87429);
 var getOwnPropertyDescriptor = (__nccwpck_require__(18221).f);
 var toLength = __nccwpck_require__(11150);
 var toString = __nccwpck_require__(45623);
@@ -19180,7 +19180,7 @@ $({ target: 'String', proto: true, forced: forcedStringHTMLMethod('link') }, {
 /* eslint-disable es/no-string-prototype-matchall -- safe */
 var $ = __nccwpck_require__(2374);
 var call = __nccwpck_require__(7065);
-var uncurryThis = __nccwpck_require__(68610);
+var uncurryThis = __nccwpck_require__(87429);
 var createIteratorConstructor = __nccwpck_require__(18253);
 var createIterResultObject = __nccwpck_require__(13727);
 var requireObjectCoercible = __nccwpck_require__(19821);
@@ -19887,7 +19887,7 @@ fixRegExpWellKnownSymbolLogic('split', function (SPLIT, nativeSplit, maybeCallNa
 "use strict";
 
 var $ = __nccwpck_require__(2374);
-var uncurryThis = __nccwpck_require__(68610);
+var uncurryThis = __nccwpck_require__(87429);
 var getOwnPropertyDescriptor = (__nccwpck_require__(18221).f);
 var toLength = __nccwpck_require__(11150);
 var toString = __nccwpck_require__(45623);
@@ -21359,7 +21359,7 @@ exportTypedArrayMethod('some', function some(callbackfn /* , thisArg */) {
 "use strict";
 
 var global = __nccwpck_require__(31157);
-var uncurryThis = __nccwpck_require__(68610);
+var uncurryThis = __nccwpck_require__(87429);
 var fails = __nccwpck_require__(64222);
 var aCallable = __nccwpck_require__(43466);
 var internalSort = __nccwpck_require__(17690);
@@ -21848,7 +21848,7 @@ var fromAsync = __nccwpck_require__(36925);
 
 // `Array.fromAsync` method
 // https://github.com/tc39/proposal-array-from-async
-$({ target: 'Array', stat: true, forced: true }, {
+$({ target: 'Array', stat: true }, {
   fromAsync: fromAsync
 });
 
@@ -22903,14 +22903,14 @@ $({ target: 'Function', stat: true, forced: true }, {
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var $ = __nccwpck_require__(2374);
-var uncurryThisRaw = __nccwpck_require__(99867);
+var uncurryThis = __nccwpck_require__(68610);
 var aCallable = __nccwpck_require__(43466);
 
 // `Function.prototype.unThis` method
 // https://github.com/js-choi/proposal-function-un-this
 $({ target: 'Function', proto: true, forced: true }, {
   unThis: function unThis() {
-    return uncurryThisRaw(aCallable(this));
+    return uncurryThis(aCallable(this));
   }
 });
 
@@ -65852,14 +65852,12 @@ async function buildParamsFromInputs(params) {
     else {
         finalParams = params;
     }
-    const { sourceMapsOutputPath, symbolTableOutputPath } = params;
-    if (sourceMapsOutputPath !== undefined) {
+    const { sourceMapsOutputPath, symbolTableOutputPath, sourceMaps, sourceMapsSourceContent } = params;
+    if (sourceMaps) {
+        console.log({ sourceMaps, sourceMapsSourceContent });
         finalParams.sourceMaps = {
-            sourceContent: true
+            sourceContent: sourceMapsSourceContent
         };
-    }
-    else {
-        finalParams.sourceMaps = false;
     }
     delete finalParams.jscramblerConfigPath;
     delete finalParams.sourceMapsOutputPath;
@@ -65916,6 +65914,8 @@ function getInputs() {
         host: getStringParam('host'),
         port: getStringParam('port'),
         basePath: getStringParam('base-path'),
+        sourceMaps: getBooleanParam('source-maps'),
+        sourceMapsSourceContent: getBooleanParam('source-maps-source-content'),
         sourceMapsOutputPath: getStringParam('source-maps-output-path'),
         symbolTableOutputPath: getStringParam('symbol-table-output-path'),
         debugMode: getBooleanParam('debug-mode'),

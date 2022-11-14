@@ -20,7 +20,7 @@ The following inputs are small subset of the fields you can find in above Settin
   * `files-src`: Paths of source files to protect. Glob patterns allowed. Use multiline strings to specify multiple files.
   * `files-dest`: Path of protected output
   * `jscrambler-version`: Jscrambler version to use
-  * `protocol`, `host`, `path` and `base-path`: Alternative path of protection server
+  * `protocol`, `host`, `port` and `base-path`: Alternative path of protection server
   * `source-maps`: If you want to generate source-maps
   * `source-maps-source-content (default: true)`: If you want to include the original source code in the source map file
   * `source-maps-output-path`: Path of output source maps

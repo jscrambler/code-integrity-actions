@@ -16,7 +16,6 @@ export default async function buildParamsFromInputs(params: InputParams) {
   const {sourceMapsOutputPath, symbolTableOutputPath, sourceMaps, sourceMapsSourceContent} = params;
 
   if (sourceMaps) {
-    console.log({sourceMaps, sourceMapsSourceContent});
     finalParams.sourceMaps = {
       sourceContent: sourceMapsSourceContent
     };

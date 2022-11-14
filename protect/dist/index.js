@@ -66002,7 +66002,7 @@ async function launch() {
         filesSrc: undefined,
         protectionId,
     };
-    if (sourceMapsOutputPath !== undefined) {
+    if (sourceMapsOutputPath !== undefined && !!finalParams.sourceMaps) {
         await jscrambler.downloadSourceMaps({
             ...downloadArtifactsParams,
             filesDest: sourceMapsOutputPath,

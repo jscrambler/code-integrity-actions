@@ -37,7 +37,6 @@ Place the ["No Secrets" Jscrambler Settings File](https://docs.jscrambler.com/la
 
 ```yaml
 steps:
-- uses: actions/checkout@v3
 - uses: jscrambler/code-integrity-actions/protect@v6
   with:
     secret-key: ${{ secrets.JSCRAMBLER_SECRET_KEY }}

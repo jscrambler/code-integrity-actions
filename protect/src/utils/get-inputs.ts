@@ -95,5 +95,10 @@ export default function getInputs(): InputParams {
     params.proxy = proxy;
   }
 
-  return params;
+  return Object.keys(params).reduce((acc, key) => {
+    if (params[key as keyof InputParams] !== undefined) {
+      acc[key as keyof InputParams] = params[key as keyof InputParams] as never;
+    }
+    return acc;
+  }, {} as InputParams);
 }

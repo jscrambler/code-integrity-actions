@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@actions/core": "1.10.0",
-    "jscrambler": "6.4.5"
+    "jscrambler": "6.4.6"
   },
   "files": [
     "main.js",

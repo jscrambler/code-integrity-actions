@@ -38388,11 +38388,19 @@ var _default = {
             }
             _context4.next = 16;
             return _this2.getApplicationProfiling(client, applicationId).catch(function (e) {
-              if (![_constants.HTTP_STATUS_CODES.NOT_FOUND, _constants.HTTP_STATUS_CODES.FORBIDDEN, _constants.HTTP_STATUS_CODES.SERVICE_UNAVAILABLE].includes(e.statusCode)) throw e;else if (_constants.HTTP_STATUS_CODES.NOT_FOUND === e.statusCode) {
-                // if applicationProfiling is not found then then it hasn't been done yet
-                // profiling cannot be done with automatic mode if it has never been done before
-                if (profilingDataMode === 'automatic') {
-                  throw new Error('You can not use the automatic mode without previous profiling having been done.');
+              if (typeof profilingDataMode === 'string' && profilingDataMode !== 'off') {
+                switch (e.statusCode) {
+                  case _constants.HTTP_STATUS_CODES.FORBIDDEN:
+                    throw new Error("No ".concat(profilingDataMode, " profiling feature in your plan. Please set profilingDataMode to \"off\" or contact the Jscrambler Support."));
+                  case _constants.HTTP_STATUS_CODES.NOT_FOUND:
+                    if (profilingDataMode === 'automatic') {
+                      throw new Error('You can not use the automatic mode without previous profiling having been done.');
+                    }
+                    break;
+                  case _constants.HTTP_STATUS_CODES.SERVICE_UNAVAILABLE:
+                    if (profilingDataMode === 'automatic') {
+                      throw e;
+                    }
                 }
               }
             });
@@ -67189,7 +67197,7 @@ module.exports = JSON.parse('{"name":"axios","version":"0.21.4","description":"P
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler API client.","version":"6.4.8","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <code@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"licenses":[{"type":"MIT","url":"https://github.com/jscrambler/javascript-jscrambler/blob/master/LICENSE-MIT"}],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"grunt watch","prepublish":"npm run build"},"engines":{"node":">= 6.10.0"},"dependencies":{"@jscrambler/https-proxy-agent":"^5.0.1","axios":"^0.21.1","commander":"^2.8.1","core-js":"^3.16.4","filesize-parser":"1.5.0","fs-extra":"^10.1.0","glob":"^7.0.3","http-proxy-agent":"^4.0.1","jszip":"^3.7.1","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","q":"^1.4.1","rc":"^1.1.0","regenerator-runtime":"^0.13.9","snake-case":"^2.1.0","temp":"^0.8.3"},"devDependencies":{"@babel/cli":"^7.14.8","@babel/core":"^7.15.0","@babel/plugin-proposal-object-rest-spread":"^7.14.7","@babel/preset-env":"^7.15.0","grunt":"^1.0.2","grunt-cli":"^1.2.0","grunt-contrib-clean":"^1.0.0","grunt-contrib-copy":"^1.0.0","grunt-contrib-watch":"^1.0.0"},"files":["dist","LICENSE-MIT"],"main":"dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"}}');
+module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler API client.","version":"6.4.9","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <code@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"licenses":[{"type":"MIT","url":"https://github.com/jscrambler/javascript-jscrambler/blob/master/LICENSE-MIT"}],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"grunt watch","prepublish":"npm run build"},"engines":{"node":">= 6.10.0"},"dependencies":{"@jscrambler/https-proxy-agent":"^5.0.1","axios":"^0.21.1","commander":"^2.8.1","core-js":"^3.16.4","filesize-parser":"1.5.0","fs-extra":"^10.1.0","glob":"^7.0.3","http-proxy-agent":"^4.0.1","jszip":"^3.7.1","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","q":"^1.4.1","rc":"^1.1.0","regenerator-runtime":"^0.13.9","snake-case":"^2.1.0","temp":"^0.8.3"},"devDependencies":{"@babel/cli":"^7.14.8","@babel/core":"^7.15.0","@babel/plugin-proposal-object-rest-spread":"^7.14.7","@babel/preset-env":"^7.15.0","grunt":"^1.0.2","grunt-cli":"^1.2.0","grunt-contrib-clean":"^1.0.0","grunt-contrib-copy":"^1.0.0","grunt-contrib-watch":"^1.0.0"},"files":["dist","LICENSE-MIT"],"main":"dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"}}');
 
 /***/ })
 

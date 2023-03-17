@@ -1726,6 +1726,10 @@ function checkBypass(reqUrl) {
     if (!reqUrl.hostname) {
         return false;
     }
+    const reqHost = reqUrl.hostname;
+    if (isLoopbackAddress(reqHost)) {
+        return true;
+    }
     const noProxy = process.env['no_proxy'] || process.env['NO_PROXY'] || '';
     if (!noProxy) {
         return false;
@@ -1751,13 +1755,24 @@ function checkBypass(reqUrl) {
         .split(',')
         .map(x => x.trim().toUpperCase())
         .filter(x => x)) {
-        if (upperReqHosts.some(x => x === upperNoProxyItem)) {
+        if (upperNoProxyItem === '*' ||
+            upperReqHosts.some(x => x === upperNoProxyItem ||
+                x.endsWith(`.${upperNoProxyItem}`) ||
+                (upperNoProxyItem.startsWith('.') &&
+                    x.endsWith(`${upperNoProxyItem}`)))) {
             return true;
         }
     }
     return false;
 }
 exports.checkBypass = checkBypass;
+function isLoopbackAddress(host) {
+    const hostLower = host.toLowerCase();
+    return (hostLower === 'localhost' ||
+        hostLower.startsWith('127.') ||
+        hostLower.startsWith('[::1]') ||
+        hostLower.startsWith('[0:0:0:0:0:0:0:1]'));
+}
 //# sourceMappingURL=proxy.js.map
 
 /***/ }),
@@ -2332,7 +2347,7 @@ module.exports = __nccwpck_require__(32438);
 
 /***/ }),
 
-/***/ 78664:
+/***/ 70032:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
@@ -3634,7 +3649,7 @@ function getDefaultAdapter() {
     adapter = __nccwpck_require__(78414);
   } else if (typeof process !== 'undefined' && Object.prototype.toString.call(process) === '[object process]') {
     // For node use HTTP adapter
-    adapter = __nccwpck_require__(78664);
+    adapter = __nccwpck_require__(70032);
   }
   return adapter;
 }
@@ -4930,14 +4945,6 @@ var isArray = Array.isArray || function (xs) {
 
 /***/ }),
 
-/***/ 98204:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-module.exports = __nccwpck_require__(16432);
-
-
-/***/ }),
-
 /***/ 16432:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -4991,9 +4998,13 @@ __nccwpck_require__(54818);
 __nccwpck_require__(88993);
 __nccwpck_require__(19336);
 __nccwpck_require__(2217);
+__nccwpck_require__(70467);
+__nccwpck_require__(68102);
+__nccwpck_require__(97205);
 __nccwpck_require__(67050);
 __nccwpck_require__(50799);
 __nccwpck_require__(29716);
+__nccwpck_require__(71513);
 __nccwpck_require__(90987);
 __nccwpck_require__(25592);
 __nccwpck_require__(18011);
@@ -5170,7 +5181,10 @@ __nccwpck_require__(24072);
 __nccwpck_require__(25605);
 __nccwpck_require__(82853);
 __nccwpck_require__(1286);
+__nccwpck_require__(2886);
+__nccwpck_require__(78664);
 __nccwpck_require__(11582);
+__nccwpck_require__(28734);
 __nccwpck_require__(5375);
 __nccwpck_require__(58700);
 __nccwpck_require__(34427);
@@ -5194,6 +5208,9 @@ __nccwpck_require__(59642);
 __nccwpck_require__(61574);
 __nccwpck_require__(42335);
 __nccwpck_require__(17389);
+__nccwpck_require__(71570);
+__nccwpck_require__(15467);
+__nccwpck_require__(699);
 __nccwpck_require__(83727);
 __nccwpck_require__(75111);
 __nccwpck_require__(50290);
@@ -5215,6 +5232,7 @@ __nccwpck_require__(81665);
 __nccwpck_require__(19840);
 __nccwpck_require__(19406);
 __nccwpck_require__(45104);
+__nccwpck_require__(14649);
 __nccwpck_require__(39789);
 __nccwpck_require__(12571);
 __nccwpck_require__(4246);
@@ -5231,11 +5249,15 @@ __nccwpck_require__(80876);
 __nccwpck_require__(94509);
 __nccwpck_require__(63562);
 __nccwpck_require__(21991);
+__nccwpck_require__(68967);
 __nccwpck_require__(76075);
 __nccwpck_require__(19348);
 __nccwpck_require__(96209);
 __nccwpck_require__(55448);
 __nccwpck_require__(4650);
+__nccwpck_require__(39215);
+__nccwpck_require__(44150);
+__nccwpck_require__(761);
 __nccwpck_require__(31290);
 __nccwpck_require__(25103);
 __nccwpck_require__(56043);
@@ -5323,6 +5345,8 @@ __nccwpck_require__(32707);
 __nccwpck_require__(85514);
 __nccwpck_require__(39616);
 __nccwpck_require__(68405);
+__nccwpck_require__(38068);
+__nccwpck_require__(38661);
 __nccwpck_require__(22694);
 __nccwpck_require__(63732);
 __nccwpck_require__(30953);
@@ -5365,6 +5389,7 @@ __nccwpck_require__(13929);
 __nccwpck_require__(26560);
 __nccwpck_require__(48147);
 __nccwpck_require__(39819);
+__nccwpck_require__(81999);
 
 module.exports = __nccwpck_require__(43516);
 
@@ -5374,7 +5399,7 @@ module.exports = __nccwpck_require__(43516);
 /***/ 80100:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-module.exports = __nccwpck_require__(98204);
+module.exports = __nccwpck_require__(16432);
 
 
 /***/ }),
@@ -5485,6 +5510,52 @@ module.exports = function (it) {
 
 /***/ }),
 
+/***/ 99113:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var uncurryThis = __nccwpck_require__(68610);
+var bind = __nccwpck_require__(68978);
+var anObject = __nccwpck_require__(19232);
+var isNullOrUndefined = __nccwpck_require__(43927);
+var getMethod = __nccwpck_require__(47591);
+var wellKnownSymbol = __nccwpck_require__(48322);
+
+var ASYNC_DISPOSE = wellKnownSymbol('asyncDispose');
+var DISPOSE = wellKnownSymbol('dispose');
+
+var push = uncurryThis([].push);
+
+var getDisposeMethod = function (V, hint) {
+  if (hint == 'async-dispose') {
+    return getMethod(V, ASYNC_DISPOSE) || getMethod(V, DISPOSE);
+  } return getMethod(V, DISPOSE);
+};
+
+// `CreateDisposableResource` abstract operation
+// https://tc39.es/proposal-explicit-resource-management/#sec-createdisposableresource
+var createDisposableResource = function (V, hint, method) {
+  return bind(method || getDisposeMethod(V, hint), V);
+};
+
+// `AddDisposableResource` abstract operation
+// https://tc39.es/proposal-explicit-resource-management/#sec-adddisposableresource-disposable-v-hint-disposemethod
+module.exports = function (disposable, V, hint, method) {
+  var resource;
+  if (!method) {
+    if (isNullOrUndefined(V)) return;
+    resource = createDisposableResource(V, hint);
+  } else if (isNullOrUndefined(V)) {
+    resource = createDisposableResource(undefined, hint, method);
+  } else {
+    resource = createDisposableResource(anObject(V), hint, method);
+  }
+
+  push(disposable.stack, resource);
+};
+
+
+/***/ }),
+
 /***/ 34163:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -5569,6 +5640,46 @@ module.exports = typeof ArrayBuffer != 'undefined' && typeof DataView != 'undefi
 
 /***/ }),
 
+/***/ 36374:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var uncurryThisAccessor = __nccwpck_require__(76748);
+var classof = __nccwpck_require__(45347);
+
+var $TypeError = TypeError;
+
+// Includes
+// - Perform ? RequireInternalSlot(O, [[ArrayBufferData]]).
+// - If IsSharedArrayBuffer(O) is true, throw a TypeError exception.
+module.exports = uncurryThisAccessor(ArrayBuffer.prototype, 'byteLength', 'get') || function (O) {
+  if (classof(O) != 'ArrayBuffer') throw $TypeError('ArrayBuffer expected');
+  return O.byteLength;
+};
+
+
+/***/ }),
+
+/***/ 18346:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var uncurryThis = __nccwpck_require__(68610);
+var arrayBufferByteLength = __nccwpck_require__(36374);
+
+var slice = uncurryThis(ArrayBuffer.prototype.slice);
+
+module.exports = function (O) {
+  if (arrayBufferByteLength(O) !== 0) return false;
+  try {
+    slice(O, 0, 0);
+    return false;
+  } catch (error) {
+    return true;
+  }
+};
+
+
+/***/ }),
+
 /***/ 856:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -5582,6 +5693,48 @@ module.exports = fails(function () {
     if (Object.isExtensible(buffer)) Object.defineProperty(buffer, 'a', { value: 8 });
   }
 });
+
+
+/***/ }),
+
+/***/ 66304:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var global = __nccwpck_require__(31157);
+var uncurryThis = __nccwpck_require__(68610);
+var uncurryThisAccessor = __nccwpck_require__(76748);
+var toIndex = __nccwpck_require__(37017);
+var isDetached = __nccwpck_require__(18346);
+var arrayBufferByteLength = __nccwpck_require__(36374);
+var PROPER_TRANSFER = __nccwpck_require__(13177);
+
+var TypeError = global.TypeError;
+var structuredClone = global.structuredClone;
+var ArrayBuffer = global.ArrayBuffer;
+var DataView = global.DataView;
+var min = Math.min;
+var ArrayBufferPrototype = ArrayBuffer.prototype;
+var DataViewPrototype = DataView.prototype;
+var slice = uncurryThis(ArrayBufferPrototype.slice);
+var isResizable = uncurryThisAccessor(ArrayBufferPrototype, 'resizable', 'get');
+var maxByteLength = uncurryThisAccessor(ArrayBufferPrototype, 'maxByteLength', 'get');
+var getInt8 = uncurryThis(DataViewPrototype.getInt8);
+var setInt8 = uncurryThis(DataViewPrototype.setInt8);
+
+module.exports = PROPER_TRANSFER && function (arrayBuffer, newLength, preserveResizability) {
+  var byteLength = arrayBufferByteLength(arrayBuffer);
+  var newByteLength = newLength === undefined ? byteLength : min(toIndex(newLength), byteLength);
+  var fixedLength = !isResizable || !isResizable(arrayBuffer);
+  if (isDetached(arrayBuffer)) throw TypeError('ArrayBuffer is detached');
+  var newBuffer = structuredClone(arrayBuffer, { transfer: [arrayBuffer] });
+  if (byteLength == newByteLength && (preserveResizability || fixedLength)) return newBuffer;
+  if (!preserveResizability || fixedLength) return slice(newBuffer, 0, newByteLength);
+  var newNewBuffer = new ArrayBuffer(newByteLength, maxByteLength && { maxByteLength: maxByteLength(newBuffer) });
+  var a = new DataView(newBuffer);
+  var b = new DataView(newNewBuffer);
+  for (var i = 0; i < newByteLength; i++) setInt8(b, i, getInt8(a, i));
+  return newNewBuffer;
+};
 
 
 /***/ }),
@@ -5601,7 +5754,7 @@ var classof = __nccwpck_require__(78765);
 var tryToString = __nccwpck_require__(40791);
 var createNonEnumerableProperty = __nccwpck_require__(96996);
 var defineBuiltIn = __nccwpck_require__(56986);
-var defineProperty = (__nccwpck_require__(37161).f);
+var defineBuiltInAccessor = __nccwpck_require__(42980);
 var isPrototypeOf = __nccwpck_require__(49982);
 var getPrototypeOf = __nccwpck_require__(13128);
 var setPrototypeOf = __nccwpck_require__(26435);
@@ -5759,9 +5912,12 @@ if (NATIVE_ARRAY_BUFFER_VIEWS && getPrototypeOf(Uint8ClampedArrayPrototype) !== 
 
 if (DESCRIPTORS && !hasOwn(TypedArrayPrototype, TO_STRING_TAG)) {
   TYPED_ARRAY_TAG_REQUIRED = true;
-  defineProperty(TypedArrayPrototype, TO_STRING_TAG, { get: function () {
-    return isObject(this) ? this[TYPED_ARRAY_TAG] : undefined;
-  } });
+  defineBuiltInAccessor(TypedArrayPrototype, TO_STRING_TAG, {
+    configurable: true,
+    get: function () {
+      return isObject(this) ? this[TYPED_ARRAY_TAG] : undefined;
+    }
+  });
   for (NAME in TypedArrayConstructorsList) if (global[NAME]) {
     createNonEnumerableProperty(global[NAME], TYPED_ARRAY_TAG, NAME);
   }
@@ -5795,6 +5951,7 @@ var DESCRIPTORS = __nccwpck_require__(35144);
 var NATIVE_ARRAY_BUFFER = __nccwpck_require__(87212);
 var FunctionName = __nccwpck_require__(36642);
 var createNonEnumerableProperty = __nccwpck_require__(96996);
+var defineBuiltInAccessor = __nccwpck_require__(42980);
 var defineBuiltIns = __nccwpck_require__(69413);
 var fails = __nccwpck_require__(64222);
 var anInstance = __nccwpck_require__(19324);
@@ -5805,7 +5962,6 @@ var IEEE754 = __nccwpck_require__(30309);
 var getPrototypeOf = __nccwpck_require__(13128);
 var setPrototypeOf = __nccwpck_require__(26435);
 var getOwnPropertyNames = (__nccwpck_require__(43414).f);
-var defineProperty = (__nccwpck_require__(37161).f);
 var arrayFill = __nccwpck_require__(78097);
 var arraySlice = __nccwpck_require__(43393);
 var setToStringTag = __nccwpck_require__(70447);
@@ -5813,13 +5969,14 @@ var InternalStateModule = __nccwpck_require__(31202);
 
 var PROPER_FUNCTION_NAME = FunctionName.PROPER;
 var CONFIGURABLE_FUNCTION_NAME = FunctionName.CONFIGURABLE;
-var getInternalState = InternalStateModule.get;
-var setInternalState = InternalStateModule.set;
 var ARRAY_BUFFER = 'ArrayBuffer';
 var DATA_VIEW = 'DataView';
 var PROTOTYPE = 'prototype';
 var WRONG_LENGTH = 'Wrong length';
 var WRONG_INDEX = 'Wrong index';
+var getInternalArrayBufferState = InternalStateModule.getterFor(ARRAY_BUFFER);
+var getInternalDataViewState = InternalStateModule.getterFor(DATA_VIEW);
+var setInternalState = InternalStateModule.set;
 var NativeArrayBuffer = global[ARRAY_BUFFER];
 var $ArrayBuffer = NativeArrayBuffer;
 var ArrayBufferPrototype = $ArrayBuffer && $ArrayBuffer[PROTOTYPE];
@@ -5858,15 +6015,20 @@ var packFloat64 = function (number) {
   return packIEEE754(number, 52, 8);
 };
 
-var addGetter = function (Constructor, key) {
-  defineProperty(Constructor[PROTOTYPE], key, { get: function () { return getInternalState(this)[key]; } });
+var addGetter = function (Constructor, key, getInternalState) {
+  defineBuiltInAccessor(Constructor[PROTOTYPE], key, {
+    configurable: true,
+    get: function () {
+      return getInternalState(this)[key];
+    }
+  });
 };
 
 var get = function (view, count, index, isLittleEndian) {
   var intIndex = toIndex(index);
-  var store = getInternalState(view);
+  var store = getInternalDataViewState(view);
   if (intIndex + count > store.byteLength) throw RangeError(WRONG_INDEX);
-  var bytes = getInternalState(store.buffer).bytes;
+  var bytes = store.bytes;
   var start = intIndex + store.byteOffset;
   var pack = arraySlice(bytes, start, start + count);
   return isLittleEndian ? pack : reverse(pack);
@@ -5874,9 +6036,9 @@ var get = function (view, count, index, isLittleEndian) {
 
 var set = function (view, count, index, conversion, value, isLittleEndian) {
   var intIndex = toIndex(index);
-  var store = getInternalState(view);
+  var store = getInternalDataViewState(view);
   if (intIndex + count > store.byteLength) throw RangeError(WRONG_INDEX);
-  var bytes = getInternalState(store.buffer).bytes;
+  var bytes = store.bytes;
   var start = intIndex + store.byteOffset;
   var pack = conversion(+value);
   for (var i = 0; i < count; i++) bytes[start + i] = pack[isLittleEndian ? i : count - i - 1];
@@ -5887,10 +6049,14 @@ if (!NATIVE_ARRAY_BUFFER) {
     anInstance(this, ArrayBufferPrototype);
     var byteLength = toIndex(length);
     setInternalState(this, {
+      type: ARRAY_BUFFER,
       bytes: fill(Array(byteLength), 0),
       byteLength: byteLength
     });
-    if (!DESCRIPTORS) this.byteLength = byteLength;
+    if (!DESCRIPTORS) {
+      this.byteLength = byteLength;
+      this.detached = false;
+    }
   };
 
   ArrayBufferPrototype = $ArrayBuffer[PROTOTYPE];
@@ -5898,15 +6064,18 @@ if (!NATIVE_ARRAY_BUFFER) {
   $DataView = function DataView(buffer, byteOffset, byteLength) {
     anInstance(this, DataViewPrototype);
     anInstance(buffer, ArrayBufferPrototype);
-    var bufferLength = getInternalState(buffer).byteLength;
+    var bufferState = getInternalArrayBufferState(buffer);
+    var bufferLength = bufferState.byteLength;
     var offset = toIntegerOrInfinity(byteOffset);
     if (offset < 0 || offset > bufferLength) throw RangeError('Wrong offset');
     byteLength = byteLength === undefined ? bufferLength - offset : toLength(byteLength);
     if (offset + byteLength > bufferLength) throw RangeError(WRONG_LENGTH);
     setInternalState(this, {
+      type: DATA_VIEW,
       buffer: buffer,
       byteLength: byteLength,
-      byteOffset: offset
+      byteOffset: offset,
+      bytes: bufferState.bytes
     });
     if (!DESCRIPTORS) {
       this.buffer = buffer;
@@ -5918,10 +6087,10 @@ if (!NATIVE_ARRAY_BUFFER) {
   DataViewPrototype = $DataView[PROTOTYPE];
 
   if (DESCRIPTORS) {
-    addGetter($ArrayBuffer, 'byteLength');
-    addGetter($DataView, 'buffer');
-    addGetter($DataView, 'byteLength');
-    addGetter($DataView, 'byteOffset');
+    addGetter($ArrayBuffer, 'byteLength', getInternalArrayBufferState);
+    addGetter($DataView, 'buffer', getInternalDataViewState);
+    addGetter($DataView, 'byteLength', getInternalDataViewState);
+    addGetter($DataView, 'byteOffset', getInternalDataViewState);
   }
 
   defineBuiltIns(DataViewPrototype, {
@@ -6994,66 +7163,45 @@ var createAsyncIteratorProxyPrototype = function (IS_ITERATOR) {
     } return { exit: false, value: state };
   };
 
-  var enqueue = function (state, handler) {
-    var task = function () {
-      var promise = handler();
-      if (IS_GENERATOR) {
-        state.awaiting = promise;
-        var clean = function () {
-          if (state.awaiting === promise) state.awaiting = null;
-        };
-        promise.then(clean, clean);
-      } return promise;
-    };
-
-    return state.awaiting ? state.awaiting = state.awaiting.then(task, task) : task();
-  };
-
   return defineBuiltIns(create(AsyncIteratorPrototype), {
     next: function next() {
       var stateCompletion = getStateOrEarlyExit(this);
-      var exit = stateCompletion.exit;
       var state = stateCompletion.value;
-
-      return exit ? state : enqueue(state, function () {
-        var handlerCompletion = perform(function () {
-          return anObject(state.nextHandler(Promise));
-        });
-        var handlerError = handlerCompletion.error;
-        var value = handlerCompletion.value;
-        if (handlerError) state.done = true;
-        return handlerError ? Promise.reject(value) : Promise.resolve(value);
+      if (stateCompletion.exit) return state;
+      var handlerCompletion = perform(function () {
+        return anObject(state.nextHandler(Promise));
       });
+      var handlerError = handlerCompletion.error;
+      var value = handlerCompletion.value;
+      if (handlerError) state.done = true;
+      return handlerError ? Promise.reject(value) : Promise.resolve(value);
     },
     'return': function () {
       var stateCompletion = getStateOrEarlyExit(this);
-      var exit = stateCompletion.exit;
       var state = stateCompletion.value;
-
-      return exit ? state : enqueue(state, function () {
-        state.done = true;
-        var iterator = state.iterator;
-        var returnMethod, result;
-        var completion = perform(function () {
-          if (state.inner) try {
-            iteratorClose(state.inner.iterator, 'normal');
-          } catch (error) {
-            return iteratorClose(iterator, 'throw', error);
-          }
-          return getMethod(iterator, 'return');
-        });
-        returnMethod = result = completion.value;
-        if (completion.error) return Promise.reject(result);
-        if (returnMethod === undefined) return Promise.resolve(createIterResultObject(undefined, true));
-        completion = perform(function () {
-          return call(returnMethod, iterator);
-        });
-        result = completion.value;
-        if (completion.error) return Promise.reject(result);
-        return IS_ITERATOR ? Promise.resolve(result) : Promise.resolve(result).then(function (resolved) {
-          anObject(resolved);
-          return createIterResultObject(undefined, true);
-        });
+      if (stateCompletion.exit) return state;
+      state.done = true;
+      var iterator = state.iterator;
+      var returnMethod, result;
+      var completion = perform(function () {
+        if (state.inner) try {
+          iteratorClose(state.inner.iterator, 'normal');
+        } catch (error) {
+          return iteratorClose(iterator, 'throw', error);
+        }
+        return getMethod(iterator, 'return');
+      });
+      returnMethod = result = completion.value;
+      if (completion.error) return Promise.reject(result);
+      if (returnMethod === undefined) return Promise.resolve(createIterResultObject(undefined, true));
+      completion = perform(function () {
+        return call(returnMethod, iterator);
+      });
+      result = completion.value;
+      if (completion.error) return Promise.reject(result);
+      return IS_ITERATOR ? Promise.resolve(result) : Promise.resolve(result).then(function (resolved) {
+        anObject(resolved);
+        return createIterResultObject(undefined, true);
       });
     }
   });
@@ -7074,7 +7222,6 @@ module.exports = function (nextHandler, IS_ITERATOR) {
     state.nextHandler = nextHandler;
     state.counter = 0;
     state.done = false;
-    state.awaiting = null;
     setInternalState(this, state);
   };
 
@@ -7513,8 +7660,8 @@ module.exports = function of() {
 
 "use strict";
 
-var defineProperty = (__nccwpck_require__(37161).f);
 var create = __nccwpck_require__(94355);
+var defineBuiltInAccessor = __nccwpck_require__(42980);
 var defineBuiltIns = __nccwpck_require__(69413);
 var bind = __nccwpck_require__(68978);
 var anInstance = __nccwpck_require__(19324);
@@ -7666,7 +7813,8 @@ module.exports = {
         return define(this, value = value === 0 ? 0 : value, value);
       }
     });
-    if (DESCRIPTORS) defineProperty(Prototype, 'size', {
+    if (DESCRIPTORS) defineBuiltInAccessor(Prototype, 'size', {
+      configurable: true,
       get: function () {
         return getInternalState(this).size;
       }
@@ -8357,53 +8505,6 @@ module.exports = !fails(function () {
 
 /***/ }),
 
-/***/ 77419:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var uncurryThis = __nccwpck_require__(68610);
-var bind = __nccwpck_require__(68978);
-var anObject = __nccwpck_require__(19232);
-var isNullOrUndefined = __nccwpck_require__(43927);
-var getMethod = __nccwpck_require__(47591);
-var wellKnownSymbol = __nccwpck_require__(48322);
-
-var ASYNC_DISPOSE = wellKnownSymbol('asyncDispose');
-var DISPOSE = wellKnownSymbol('dispose');
-
-var push = uncurryThis([].push);
-
-var getDisposeMethod = function (V, hint) {
-  if (hint == 'async-dispose') {
-    return getMethod(V, ASYNC_DISPOSE) || getMethod(V, DISPOSE);
-  } return getMethod(V, DISPOSE);
-};
-
-var createDisposableResource = function (V, hint, method) {
-  return bind(method || getDisposeMethod(V, hint), V);
-};
-
-var addDisposableResource = function (disposable, V, hint, method) {
-  var resource;
-  if (!method) {
-    if (isNullOrUndefined(V)) return;
-    resource = createDisposableResource(V, hint);
-  } else if (isNullOrUndefined(V)) {
-    resource = createDisposableResource(undefined, hint, method);
-  } else {
-    resource = createDisposableResource(anObject(V), hint, method);
-  }
-
-  push(disposable.stack, resource);
-};
-
-module.exports = {
-  getDisposeMethod: getDisposeMethod,
-  addDisposableResource: addDisposableResource
-};
-
-
-/***/ }),
-
 /***/ 2892:
 /***/ ((module) => {
 
@@ -8610,6 +8711,7 @@ module.exports = /ipad|iphone|ipod/i.test(userAgent) && typeof Pebble != 'undefi
 
 var userAgent = __nccwpck_require__(54756);
 
+// eslint-disable-next-line redos/no-vulnerable -- safe
 module.exports = /(?:ipad|iphone|ipod).*applewebkit/i.test(userAgent);
 
 
@@ -8727,6 +8829,7 @@ var $Error = Error;
 var replace = uncurryThis(''.replace);
 
 var TEST = (function (arg) { return String($Error(arg).stack); })('zxcasd');
+// eslint-disable-next-line redos/no-vulnerable -- safe
 var V8_OR_CHAKRA_STACK_ENTRY = /\n\s*at [^:]*:[^\n]*/;
 var IS_V8_OR_CHAKRA_STACK = V8_OR_CHAKRA_STACK_ENTRY.test(TEST);
 
@@ -9104,6 +9207,7 @@ var construct = function (C, argsLength, args) {
 
 // `Function.prototype.bind` method implementation
 // https://tc39.es/ecma262/#sec-function.prototype.bind
+// eslint-disable-next-line es/no-function-prototype-bind -- detection
 module.exports = NATIVE_BIND ? $Function.bind : function bind(that /* , ...args */) {
   var F = aCallable(this);
   var Prototype = F.prototype;
@@ -9133,6 +9237,21 @@ module.exports = NATIVE_BIND ? call.bind(call) : function () {
 
 /***/ }),
 
+/***/ 63941:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var uncurryThis = __nccwpck_require__(68610);
+var aCallable = __nccwpck_require__(43466);
+
+module.exports = function demethodize() {
+  return uncurryThis(aCallable(this));
+};
+
+
+/***/ }),
+
 /***/ 36642:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -9152,6 +9271,22 @@ module.exports = {
   EXISTS: EXISTS,
   PROPER: PROPER,
   CONFIGURABLE: CONFIGURABLE
+};
+
+
+/***/ }),
+
+/***/ 76748:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var uncurryThis = __nccwpck_require__(68610);
+var aCallable = __nccwpck_require__(43466);
+
+module.exports = function (object, key, method) {
+  try {
+    // eslint-disable-next-line es/no-object-getownpropertydescriptor -- safe
+    return uncurryThis(aCallable(Object.getOwnPropertyDescriptor(object, key)[method]));
+  } catch (error) { /* empty */ }
 };
 
 
@@ -9339,6 +9474,42 @@ module.exports = function (argument, usingIterator) {
 
 /***/ }),
 
+/***/ 232:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var uncurryThis = __nccwpck_require__(68610);
+var isArray = __nccwpck_require__(2343);
+var isCallable = __nccwpck_require__(63774);
+var classof = __nccwpck_require__(45347);
+var toString = __nccwpck_require__(45623);
+
+var push = uncurryThis([].push);
+
+module.exports = function (replacer) {
+  if (isCallable(replacer)) return replacer;
+  if (!isArray(replacer)) return;
+  var rawLength = replacer.length;
+  var keys = [];
+  for (var i = 0; i < rawLength; i++) {
+    var element = replacer[i];
+    if (typeof element == 'string') push(keys, element);
+    else if (typeof element == 'number' || classof(element) == 'Number' || classof(element) == 'String') push(keys, toString(element));
+  }
+  var keysLength = keys.length;
+  var root = true;
+  return function (key, value) {
+    if (root) {
+      root = false;
+      return value;
+    }
+    if (isArray(this)) return value;
+    for (var j = 0; j < keysLength; j++) if (keys[j] === key) return value;
+  };
+};
+
+
+/***/ }),
+
 /***/ 47591:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -9411,6 +9582,7 @@ var floor = Math.floor;
 var charAt = uncurryThis(''.charAt);
 var replace = uncurryThis(''.replace);
 var stringSlice = uncurryThis(''.slice);
+// eslint-disable-next-line redos/no-vulnerable -- safe
 var SUBSTITUTION_SYMBOLS = /\$([$&'`]|\d{1,2}|<[^>]*>)/g;
 var SUBSTITUTION_SYMBOLS_NO_NAMED = /\$([$&'`]|\d{1,2})/g;
 
@@ -10143,6 +10315,21 @@ module.exports = $documentAll.IS_HTMLDDA ? function (it) {
 /***/ ((module) => {
 
 module.exports = false;
+
+
+/***/ }),
+
+/***/ 45277:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var isObject = __nccwpck_require__(785);
+var getInternalState = (__nccwpck_require__(31202).get);
+
+module.exports = function isRawJSON(O) {
+  if (!isObject(O)) return false;
+  var state = getInternalState(O);
+  return !!state && state.type === 'RawJSON';
+};
 
 
 /***/ }),
@@ -11022,6 +11209,21 @@ module.exports = microtask;
 
 /***/ }),
 
+/***/ 35352:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+/* eslint-disable es/no-json -- safe */
+var fails = __nccwpck_require__(64222);
+
+module.exports = !fails(function () {
+  var unsafeInt = '9007199254740993';
+  var raw = JSON.rawJSON(unsafeInt);
+  return !JSON.isRawJSON(raw) || JSON.stringify(raw) !== unsafeInt;
+});
+
+
+/***/ }),
+
 /***/ 9276:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -11178,10 +11380,10 @@ var createIteratorConstructor = __nccwpck_require__(18253);
 var createIterResultObject = __nccwpck_require__(13727);
 var isNullOrUndefined = __nccwpck_require__(43927);
 var isObject = __nccwpck_require__(785);
-var defineProperties = (__nccwpck_require__(49883).f);
+var defineBuiltInAccessor = __nccwpck_require__(42980);
 var DESCRIPTORS = __nccwpck_require__(35144);
 
-var INCORRECT_RANGE = 'Incorrect Number.range arguments';
+var INCORRECT_RANGE = 'Incorrect Iterator.range arguments';
 var NUMERIC_RANGE_ITERATOR = 'NumericRangeIterator';
 
 var setInternalState = InternalStateModule.set;
@@ -11191,6 +11393,7 @@ var $RangeError = RangeError;
 var $TypeError = TypeError;
 
 var $RangeIterator = createIteratorConstructor(function NumericRangeIterator(start, end, option, type, zero, one) {
+  // TODO: Drop the first `typeof` check after removing legacy methods in `core-js@4`
   if (typeof start != type || (end !== Infinity && end !== -Infinity && typeof end != type)) {
     throw $TypeError(INCORRECT_RANGE);
   }
@@ -11226,7 +11429,7 @@ var $RangeIterator = createIteratorConstructor(function NumericRangeIterator(sta
     start: start,
     end: end,
     step: step,
-    inclusiveEnd: inclusiveEnd,
+    inclusive: inclusiveEnd,
     hitsEnd: hitsEnd,
     currentCount: zero,
     zero: zero
@@ -11245,7 +11448,7 @@ var $RangeIterator = createIteratorConstructor(function NumericRangeIterator(sta
   var step = state.step;
   var currentYieldingValue = start + (step * state.currentCount++);
   if (currentYieldingValue === end) state.hitsEnd = true;
-  var inclusiveEnd = state.inclusiveEnd;
+  var inclusiveEnd = state.inclusive;
   var endCondition;
   if (end > start) {
     endCondition = inclusiveEnd ? currentYieldingValue > end : currentYieldingValue >= end;
@@ -11258,25 +11461,22 @@ var $RangeIterator = createIteratorConstructor(function NumericRangeIterator(sta
   } return createIterResultObject(currentYieldingValue, false);
 });
 
-var getter = function (fn) {
-  return { get: fn, set: function () { /* empty */ }, configurable: true, enumerable: false };
+var addGetter = function (key) {
+  defineBuiltInAccessor($RangeIterator.prototype, key, {
+    get: function () {
+      return getInternalState(this)[key];
+    },
+    set: function () { /* empty */ },
+    configurable: true,
+    enumerable: false
+  });
 };
 
 if (DESCRIPTORS) {
-  defineProperties($RangeIterator.prototype, {
-    start: getter(function () {
-      return getInternalState(this).start;
-    }),
-    end: getter(function () {
-      return getInternalState(this).end;
-    }),
-    inclusive: getter(function () {
-      return getInternalState(this).inclusiveEnd;
-    }),
-    step: getter(function () {
-      return getInternalState(this).step;
-    })
-  });
+  addGetter('start');
+  addGetter('end');
+  addGetter('inclusive');
+  addGetter('step');
 }
 
 module.exports = $RangeIterator;
@@ -11803,7 +12003,7 @@ module.exports = IS_PURE || !fails(function () {
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 /* eslint-disable no-proto -- safe */
-var uncurryThis = __nccwpck_require__(68610);
+var uncurryThisAccessor = __nccwpck_require__(76748);
 var anObject = __nccwpck_require__(19232);
 var aPossiblePrototype = __nccwpck_require__(33618);
 
@@ -11816,8 +12016,7 @@ module.exports = Object.setPrototypeOf || ('__proto__' in {} ? function () {
   var test = {};
   var setter;
   try {
-    // eslint-disable-next-line es/no-object-getownpropertydescriptor -- safe
-    setter = uncurryThis(Object.getOwnPropertyDescriptor(Object.prototype, '__proto__').set);
+    setter = uncurryThisAccessor(Object.prototype, '__proto__', 'set');
     setter(test, []);
     CORRECT_SETTER = test instanceof Array;
   } catch (error) { /* empty */ }
@@ -11951,6 +12150,68 @@ module.exports = getBuiltIn('Reflect', 'ownKeys') || function ownKeys(it) {
   var keys = getOwnPropertyNamesModule.f(anObject(it));
   var getOwnPropertySymbols = getOwnPropertySymbolsModule.f;
   return getOwnPropertySymbols ? concat(keys, getOwnPropertySymbols(it)) : keys;
+};
+
+
+/***/ }),
+
+/***/ 26286:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var uncurryThis = __nccwpck_require__(68610);
+var hasOwn = __nccwpck_require__(97295);
+
+var $SyntaxError = SyntaxError;
+var $parseInt = parseInt;
+var fromCharCode = String.fromCharCode;
+var at = uncurryThis(''.charAt);
+var slice = uncurryThis(''.slice);
+var exec = uncurryThis(/./.exec);
+
+var codePoints = {
+  '\\"': '"',
+  '\\\\': '\\',
+  '\\/': '/',
+  '\\b': '\b',
+  '\\f': '\f',
+  '\\n': '\n',
+  '\\r': '\r',
+  '\\t': '\t'
+};
+
+var IS_4_HEX_DIGITS = /^[\da-f]{4}$/i;
+// eslint-disable-next-line regexp/no-control-character -- safe
+var IS_C0_CONTROL_CODE = /^[\u0000-\u001F]$/;
+
+module.exports = function (source, i) {
+  var unterminated = true;
+  var value = '';
+  while (i < source.length) {
+    var chr = at(source, i);
+    if (chr == '\\') {
+      var twoChars = slice(source, i, i + 2);
+      if (hasOwn(codePoints, twoChars)) {
+        value += codePoints[twoChars];
+        i += 2;
+      } else if (twoChars == '\\u') {
+        i += 2;
+        var fourHexDigits = slice(source, i, i + 4);
+        if (!exec(IS_4_HEX_DIGITS, fourHexDigits)) throw $SyntaxError('Bad Unicode escape at: ' + i);
+        value += fromCharCode($parseInt(fourHexDigits, 16));
+        i += 4;
+      } else throw $SyntaxError('Unknown escape sequence: "' + twoChars + '"');
+    } else if (chr == '"') {
+      unterminated = false;
+      i++;
+      break;
+    } else {
+      if (exec(IS_C0_CONTROL_CODE, chr)) throw $SyntaxError('Bad control character in string literal at: ' + i);
+      value += chr;
+      i++;
+    }
+  }
+  if (unterminated) throw $SyntaxError('Unterminated string at: ' + i);
+  return { value: value, end: i };
 };
 
 
@@ -12812,12 +13073,10 @@ module.exports = function (name) {
 /***/ 42349:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-var DESCRIPTORS = __nccwpck_require__(35144);
-var uncurryThis = __nccwpck_require__(68610);
+var uncurryThisAccessor = __nccwpck_require__(76748);
 var SetHelpers = __nccwpck_require__(3001);
 
-// eslint-disable-next-line es/no-object-getownpropertydescriptor -- safe
-module.exports = DESCRIPTORS ? uncurryThis(Object.getOwnPropertyDescriptor(SetHelpers.proto, 'size').get) : function (set) {
+module.exports = uncurryThisAccessor(SetHelpers.proto, 'size', 'get') || function (set) {
   return set.size;
 };
 
@@ -12830,7 +13089,7 @@ module.exports = DESCRIPTORS ? uncurryThis(Object.getOwnPropertyDescriptor(SetHe
 "use strict";
 
 var getBuiltIn = __nccwpck_require__(86632);
-var definePropertyModule = __nccwpck_require__(37161);
+var defineBuiltInAccessor = __nccwpck_require__(42980);
 var wellKnownSymbol = __nccwpck_require__(48322);
 var DESCRIPTORS = __nccwpck_require__(35144);
 
@@ -12838,10 +13097,9 @@ var SPECIES = wellKnownSymbol('species');
 
 module.exports = function (CONSTRUCTOR_NAME) {
   var Constructor = getBuiltIn(CONSTRUCTOR_NAME);
-  var defineProperty = definePropertyModule.f;
 
   if (DESCRIPTORS && Constructor && !Constructor[SPECIES]) {
-    defineProperty(Constructor, SPECIES, {
+    defineBuiltInAccessor(Constructor, SPECIES, {
       configurable: true,
       get: function () { return this; }
     });
@@ -12965,10 +13223,10 @@ var store = __nccwpck_require__(96091);
 (module.exports = function (key, value) {
   return store[key] || (store[key] = value !== undefined ? value : {});
 })('versions', []).push({
-  version: '3.27.2',
+  version: '3.29.1',
   mode: IS_PURE ? 'pure' : 'global',
   copyright: '© 2014-2023 Denis Pushkarev (zloirock.ru)',
-  license: 'https://github.com/zloirock/core-js/blob/v3.27.2/LICENSE',
+  license: 'https://github.com/zloirock/core-js/blob/v3.29.1/LICENSE',
   source: 'https://github.com/zloirock/core-js'
 });
 
@@ -13548,16 +13806,15 @@ var toString = __nccwpck_require__(45623);
 var whitespaces = __nccwpck_require__(2569);
 
 var replace = uncurryThis(''.replace);
-var whitespace = '[' + whitespaces + ']';
-var ltrim = RegExp('^' + whitespace + whitespace + '*');
-var rtrim = RegExp(whitespace + whitespace + '*$');
+var ltrim = RegExp('^[' + whitespaces + ']+');
+var rtrim = RegExp('(^|[^' + whitespaces + '])[' + whitespaces + ']+$');
 
 // `String.prototype.{ trim, trimStart, trimEnd, trimLeft, trimRight }` methods implementation
 var createMethod = function (TYPE) {
   return function ($this) {
     var string = toString(requireObjectCoercible($this));
     if (TYPE & 1) string = replace(string, ltrim, '');
-    if (TYPE & 2) string = replace(string, rtrim, '');
+    if (TYPE & 2) string = replace(string, rtrim, '$1');
     return string;
   };
 };
@@ -13573,6 +13830,30 @@ module.exports = {
   // https://tc39.es/ecma262/#sec-string.prototype.trim
   trim: createMethod(3)
 };
+
+
+/***/ }),
+
+/***/ 13177:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var global = __nccwpck_require__(31157);
+var fails = __nccwpck_require__(64222);
+var V8 = __nccwpck_require__(69947);
+var IS_BROWSER = __nccwpck_require__(21130);
+var IS_DENO = __nccwpck_require__(73289);
+var IS_NODE = __nccwpck_require__(72769);
+
+var structuredClone = global.structuredClone;
+
+module.exports = !!structuredClone && !fails(function () {
+  // prevent V8 ArrayBufferDetaching protector cell invalidation and performance degradation
+  // https://github.com/zloirock/core-js/issues/679
+  if ((IS_DENO && V8 > 92) || (IS_NODE && V8 > 94) || (IS_BROWSER && V8 > 97)) return false;
+  var buffer = new ArrayBuffer(8);
+  var clone = structuredClone(buffer, { transfer: [buffer] });
+  return buffer.byteLength != 0 || clone.byteLength != 8;
+});
 
 
 /***/ }),
@@ -13991,7 +14272,7 @@ var isSetLike = function (it) {
 // fallback old -> new set methods proposal arguments
 module.exports = function (it) {
   if (isSetLike(it)) return it;
-  if (isIterable(it)) return new Set(it);
+  return isIterable(it) ? new Set(it) : it;
 };
 
 
@@ -14089,6 +14370,7 @@ var getOwnPropertyNames = (__nccwpck_require__(43414).f);
 var typedArrayFrom = __nccwpck_require__(41971);
 var forEach = (__nccwpck_require__(69544).forEach);
 var setSpecies = __nccwpck_require__(58529);
+var defineBuiltInAccessor = __nccwpck_require__(42980);
 var definePropertyModule = __nccwpck_require__(37161);
 var getOwnPropertyDescriptorModule = __nccwpck_require__(18221);
 var InternalStateModule = __nccwpck_require__(31202);
@@ -14123,9 +14405,12 @@ var fromList = function (C, list) {
 };
 
 var addGetter = function (it, key) {
-  nativeDefineProperty(it, key, { get: function () {
-    return getInternalState(this)[key];
-  } });
+  defineBuiltInAccessor(it, key, {
+    configurable: true,
+    get: function () {
+      return getInternalState(this)[key];
+    }
+  });
 };
 
 var isArrayBuffer = function (it) {
@@ -14181,7 +14466,7 @@ if (DESCRIPTORS) {
   });
 
   module.exports = function (TYPE, wrapper, CLAMPED) {
-    var BYTES = TYPE.match(/\d+$/)[0] / 8;
+    var BYTES = TYPE.match(/\d+/)[0] / 8;
     var CONSTRUCTOR_NAME = TYPE + (CLAMPED ? 'Clamped' : '') + 'Array';
     var GETTER = 'get' + TYPE;
     var SETTER = 'set' + TYPE;
@@ -14437,6 +14722,7 @@ module.exports = function (key) {
 
 var fails = __nccwpck_require__(64222);
 var wellKnownSymbol = __nccwpck_require__(48322);
+var DESCRIPTORS = __nccwpck_require__(35144);
 var IS_PURE = __nccwpck_require__(39046);
 
 var ITERATOR = wellKnownSymbol('iterator');
@@ -14452,6 +14738,7 @@ module.exports = !fails(function () {
     result += key + value;
   });
   return (IS_PURE && !url.toJSON)
+    || (!searchParams.size && (IS_PURE || !DESCRIPTORS))
     || !searchParams.sort
     || url.href !== 'http://a/c%20d?a=1&c=3'
     || searchParams.get('c') !== '3'
@@ -15280,6 +15567,7 @@ var addToUnscopables = __nccwpck_require__(34163);
 
 // FF99+ bug
 var BROKEN_ON_SPARSE = fails(function () {
+  // eslint-disable-next-line es/no-array-prototype-includes -- detection
   return !Array(1).includes();
 });
 
@@ -15926,6 +16214,115 @@ $({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT }, {
 
 /***/ }),
 
+/***/ 70467:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var $ = __nccwpck_require__(2374);
+var arrayToReversed = __nccwpck_require__(63403);
+var toIndexedObject = __nccwpck_require__(6706);
+var addToUnscopables = __nccwpck_require__(34163);
+
+var $Array = Array;
+
+// `Array.prototype.toReversed` method
+// https://tc39.es/proposal-change-array-by-copy/#sec-array.prototype.toReversed
+$({ target: 'Array', proto: true }, {
+  toReversed: function toReversed() {
+    return arrayToReversed(toIndexedObject(this), $Array);
+  }
+});
+
+addToUnscopables('toReversed');
+
+
+/***/ }),
+
+/***/ 68102:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var $ = __nccwpck_require__(2374);
+var uncurryThis = __nccwpck_require__(68610);
+var aCallable = __nccwpck_require__(43466);
+var toIndexedObject = __nccwpck_require__(6706);
+var arrayFromConstructorAndList = __nccwpck_require__(19635);
+var getVirtual = __nccwpck_require__(24496);
+var addToUnscopables = __nccwpck_require__(34163);
+
+var $Array = Array;
+var sort = uncurryThis(getVirtual('Array').sort);
+
+// `Array.prototype.toSorted` method
+// https://tc39.es/proposal-change-array-by-copy/#sec-array.prototype.toSorted
+$({ target: 'Array', proto: true }, {
+  toSorted: function toSorted(compareFn) {
+    if (compareFn !== undefined) aCallable(compareFn);
+    var O = toIndexedObject(this);
+    var A = arrayFromConstructorAndList($Array, O);
+    return sort(A, compareFn);
+  }
+});
+
+addToUnscopables('toSorted');
+
+
+/***/ }),
+
+/***/ 97205:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var $ = __nccwpck_require__(2374);
+var addToUnscopables = __nccwpck_require__(34163);
+var doesNotExceedSafeInteger = __nccwpck_require__(68909);
+var lengthOfArrayLike = __nccwpck_require__(18861);
+var toAbsoluteIndex = __nccwpck_require__(71349);
+var toIndexedObject = __nccwpck_require__(6706);
+var toIntegerOrInfinity = __nccwpck_require__(4391);
+
+var $Array = Array;
+var max = Math.max;
+var min = Math.min;
+
+// `Array.prototype.toSpliced` method
+// https://tc39.es/proposal-change-array-by-copy/#sec-array.prototype.toSpliced
+$({ target: 'Array', proto: true }, {
+  toSpliced: function toSpliced(start, deleteCount /* , ...items */) {
+    var O = toIndexedObject(this);
+    var len = lengthOfArrayLike(O);
+    var actualStart = toAbsoluteIndex(start, len);
+    var argumentsLength = arguments.length;
+    var k = 0;
+    var insertCount, actualDeleteCount, newLen, A;
+    if (argumentsLength === 0) {
+      insertCount = actualDeleteCount = 0;
+    } else if (argumentsLength === 1) {
+      insertCount = 0;
+      actualDeleteCount = len - actualStart;
+    } else {
+      insertCount = argumentsLength - 2;
+      actualDeleteCount = min(max(toIntegerOrInfinity(deleteCount), 0), len - actualStart);
+    }
+    newLen = doesNotExceedSafeInteger(len + insertCount - actualDeleteCount);
+    A = $Array(newLen);
+
+    for (; k < actualStart; k++) A[k] = O[k];
+    for (; k < actualStart + insertCount; k++) A[k] = arguments[k - actualStart + 2];
+    for (; k < newLen; k++) A[k] = O[k + actualDeleteCount - insertCount];
+
+    return A;
+  }
+});
+
+addToUnscopables('toSpliced');
+
+
+/***/ }),
+
 /***/ 50799:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -16005,6 +16402,28 @@ $({ target: 'Array', proto: true, arity: 1, forced: FORCED }, {
 
 /***/ }),
 
+/***/ 71513:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var $ = __nccwpck_require__(2374);
+var arrayWith = __nccwpck_require__(13188);
+var toIndexedObject = __nccwpck_require__(6706);
+
+var $Array = Array;
+
+// `Array.prototype.with` method
+// https://tc39.es/proposal-change-array-by-copy/#sec-array.prototype.with
+$({ target: 'Array', proto: true }, {
+  'with': function (index, value) {
+    return arrayWith(toIndexedObject(this), $Array, index, value);
+  }
+});
+
+
+/***/ }),
+
 /***/ 65383:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -16041,6 +16460,7 @@ var fails = __nccwpck_require__(64222);
 
 // IE8- non-standard case
 var FORCED = fails(function () {
+  // eslint-disable-next-line es/no-date-prototype-getyear-setyear -- detection
   return new Date(16e11).getYear() !== 120;
 });
 
@@ -16352,6 +16772,7 @@ var bind = __nccwpck_require__(46041);
 
 // `Function.prototype.bind` method
 // https://tc39.es/ecma262/#sec-function.prototype.bind
+// eslint-disable-next-line es/no-function-prototype-bind -- detection
 $({ target: 'Function', proto: true, forced: Function.bind !== bind }, {
   bind: bind
 });
@@ -16396,7 +16817,7 @@ if (!(HAS_INSTANCE in FunctionPrototype)) {
 var DESCRIPTORS = __nccwpck_require__(35144);
 var FUNCTION_NAME_EXISTS = (__nccwpck_require__(36642).EXISTS);
 var uncurryThis = __nccwpck_require__(68610);
-var defineProperty = (__nccwpck_require__(37161).f);
+var defineBuiltInAccessor = __nccwpck_require__(42980);
 
 var FunctionPrototype = Function.prototype;
 var functionToString = uncurryThis(FunctionPrototype.toString);
@@ -16407,7 +16828,7 @@ var NAME = 'name';
 // Function instances `.name` property
 // https://tc39.es/ecma262/#sec-function-instances-name
 if (DESCRIPTORS && !FUNCTION_NAME_EXISTS) {
-  defineProperty(FunctionPrototype, NAME, {
+  defineBuiltInAccessor(FunctionPrototype, NAME, {
     configurable: true,
     get: function () {
       try {
@@ -16446,13 +16867,13 @@ var apply = __nccwpck_require__(78932);
 var call = __nccwpck_require__(7065);
 var uncurryThis = __nccwpck_require__(68610);
 var fails = __nccwpck_require__(64222);
-var isArray = __nccwpck_require__(2343);
 var isCallable = __nccwpck_require__(63774);
-var isObject = __nccwpck_require__(785);
 var isSymbol = __nccwpck_require__(9370);
 var arraySlice = __nccwpck_require__(42471);
+var getReplacerFunction = __nccwpck_require__(232);
 var NATIVE_SYMBOL = __nccwpck_require__(6968);
 
+var $String = String;
 var $stringify = getBuiltIn('JSON', 'stringify');
 var exec = uncurryThis(/./.exec);
 var charAt = uncurryThis(''.charAt);
@@ -16482,13 +16903,13 @@ var ILL_FORMED_UNICODE = fails(function () {
 
 var stringifyWithSymbolsFix = function (it, replacer) {
   var args = arraySlice(arguments);
-  var $replacer = replacer;
-  if (!isObject(replacer) && it === undefined || isSymbol(it)) return; // IE8 returns string on undefined
-  if (!isArray(replacer)) replacer = function (key, value) {
-    if (isCallable($replacer)) value = call($replacer, this, key, value);
+  var $replacer = getReplacerFunction(replacer);
+  if (!isCallable($replacer) && (it === undefined || isSymbol(it))) return; // IE8 returns string on undefined
+  args[1] = function (key, value) {
+    // some old implementations (like WebKit) could pass numbers as keys
+    if (isCallable($replacer)) value = call($replacer, this, $String(key), value);
     if (!isSymbol(value)) return value;
   };
-  args[1] = replacer;
   return apply($stringify, null, args);
 };
 
@@ -20951,6 +21372,7 @@ var definePropertyModule = __nccwpck_require__(37161);
 var definePropertiesModule = __nccwpck_require__(49883);
 var propertyIsEnumerableModule = __nccwpck_require__(68007);
 var defineBuiltIn = __nccwpck_require__(56986);
+var defineBuiltInAccessor = __nccwpck_require__(42980);
 var shared = __nccwpck_require__(13023);
 var sharedKey = __nccwpck_require__(45471);
 var hiddenKeys = __nccwpck_require__(88162);
@@ -21122,7 +21544,7 @@ if (!NATIVE_SYMBOL) {
 
   if (DESCRIPTORS) {
     // https://github.com/tc39/proposal-Symbol-description
-    nativeDefineProperty(SymbolPrototype, 'description', {
+    defineBuiltInAccessor(SymbolPrototype, 'description', {
       configurable: true,
       get: function description() {
         return getInternalState(this).description;
@@ -21196,7 +21618,7 @@ var hasOwn = __nccwpck_require__(97295);
 var isCallable = __nccwpck_require__(63774);
 var isPrototypeOf = __nccwpck_require__(49982);
 var toString = __nccwpck_require__(45623);
-var defineProperty = (__nccwpck_require__(37161).f);
+var defineBuiltInAccessor = __nccwpck_require__(42980);
 var copyConstructorProperties = __nccwpck_require__(48706);
 
 var NativeSymbol = global.Symbol;
@@ -21229,7 +21651,7 @@ if (DESCRIPTORS && isCallable(NativeSymbol) && (!('description' in SymbolPrototy
   var replace = uncurryThis(''.replace);
   var stringSlice = uncurryThis(''.slice);
 
-  defineProperty(SymbolPrototype, 'description', {
+  defineBuiltInAccessor(SymbolPrototype, 'description', {
     configurable: true,
     get: function description() {
       var symbol = thisSymbolValue(this);
@@ -22066,7 +22488,7 @@ var $set = Int8ArrayPrototype && Int8ArrayPrototype.set;
 var aTypedArray = ArrayBufferViewCore.aTypedArray;
 var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
 
-var WORKS_WITH_OBJECTS_AND_GEERIC_ON_TYPED_ARRAYS = !fails(function () {
+var WORKS_WITH_OBJECTS_AND_GENERIC_ON_TYPED_ARRAYS = !fails(function () {
   // eslint-disable-next-line es/no-typed-arrays -- required for testing
   var array = new Uint8ClampedArray(2);
   call($set, array, { length: 1, 0: 3 }, 1);
@@ -22074,7 +22496,7 @@ var WORKS_WITH_OBJECTS_AND_GEERIC_ON_TYPED_ARRAYS = !fails(function () {
 });
 
 // https://bugs.chromium.org/p/v8/issues/detail?id=11294 and other
-var TO_OBJECT_BUG = WORKS_WITH_OBJECTS_AND_GEERIC_ON_TYPED_ARRAYS && ArrayBufferViewCore.NATIVE_ARRAY_BUFFER_VIEWS && fails(function () {
+var TO_OBJECT_BUG = WORKS_WITH_OBJECTS_AND_GENERIC_ON_TYPED_ARRAYS && ArrayBufferViewCore.NATIVE_ARRAY_BUFFER_VIEWS && fails(function () {
   var array = new Int8Array(2);
   array.set(1);
   array.set('2', 1);
@@ -22087,13 +22509,13 @@ exportTypedArrayMethod('set', function set(arrayLike /* , offset */) {
   aTypedArray(this);
   var offset = toOffset(arguments.length > 1 ? arguments[1] : undefined, 1);
   var src = toIndexedObject(arrayLike);
-  if (WORKS_WITH_OBJECTS_AND_GEERIC_ON_TYPED_ARRAYS) return call($set, this, src, offset);
+  if (WORKS_WITH_OBJECTS_AND_GENERIC_ON_TYPED_ARRAYS) return call($set, this, src, offset);
   var length = this.length;
   var len = lengthOfArrayLike(src);
   var index = 0;
   if (len + offset > length) throw RangeError('Wrong length');
   while (index < len) this[offset + index] = src[index++];
-}, !WORKS_WITH_OBJECTS_AND_GEERIC_ON_TYPED_ARRAYS || TO_OBJECT_BUG);
+}, !WORKS_WITH_OBJECTS_AND_GENERIC_ON_TYPED_ARRAYS || TO_OBJECT_BUG);
 
 
 /***/ }),
@@ -22299,6 +22721,54 @@ exportTypedArrayMethod('toLocaleString', function toLocaleString() {
 
 /***/ }),
 
+/***/ 2886:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var arrayToReversed = __nccwpck_require__(63403);
+var ArrayBufferViewCore = __nccwpck_require__(4016);
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+var getTypedArrayConstructor = ArrayBufferViewCore.getTypedArrayConstructor;
+
+// `%TypedArray%.prototype.toReversed` method
+// https://tc39.es/proposal-change-array-by-copy/#sec-%typedarray%.prototype.toReversed
+exportTypedArrayMethod('toReversed', function toReversed() {
+  return arrayToReversed(aTypedArray(this), getTypedArrayConstructor(this));
+});
+
+
+/***/ }),
+
+/***/ 78664:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var ArrayBufferViewCore = __nccwpck_require__(4016);
+var uncurryThis = __nccwpck_require__(68610);
+var aCallable = __nccwpck_require__(43466);
+var arrayFromConstructorAndList = __nccwpck_require__(19635);
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var getTypedArrayConstructor = ArrayBufferViewCore.getTypedArrayConstructor;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+var sort = uncurryThis(ArrayBufferViewCore.TypedArrayPrototype.sort);
+
+// `%TypedArray%.prototype.toSorted` method
+// https://tc39.es/proposal-change-array-by-copy/#sec-%typedarray%.prototype.toSorted
+exportTypedArrayMethod('toSorted', function toSorted(compareFn) {
+  if (compareFn !== undefined) aCallable(compareFn);
+  var O = aTypedArray(this);
+  var A = arrayFromConstructorAndList(getTypedArrayConstructor(O), O);
+  return sort(A, compareFn);
+});
+
+
+/***/ }),
+
 /***/ 11582:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -22389,6 +22859,44 @@ createTypedArrayConstructor('Uint8', function (init) {
     return init(this, data, byteOffset, length);
   };
 }, true);
+
+
+/***/ }),
+
+/***/ 28734:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var arrayWith = __nccwpck_require__(13188);
+var ArrayBufferViewCore = __nccwpck_require__(4016);
+var isBigIntArray = __nccwpck_require__(97713);
+var toIntegerOrInfinity = __nccwpck_require__(4391);
+var toBigInt = __nccwpck_require__(7523);
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var getTypedArrayConstructor = ArrayBufferViewCore.getTypedArrayConstructor;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+
+var PROPER_ORDER = !!function () {
+  try {
+    // eslint-disable-next-line no-throw-literal, es/no-typed-arrays, es/no-array-prototype-with -- required for testing
+    new Int8Array(1)['with'](2, { valueOf: function () { throw 8; } });
+  } catch (error) {
+    // some early implementations, like WebKit, does not follow the final semantic
+    // https://github.com/tc39/proposal-change-array-by-copy/pull/86
+    return error === 8;
+  }
+}();
+
+// `%TypedArray%.prototype.with` method
+// https://tc39.es/proposal-change-array-by-copy/#sec-%typedarray%.prototype.with
+exportTypedArrayMethod('with', { 'with': function (index, value) {
+  var O = aTypedArray(this);
+  var relativeIndex = toIntegerOrInfinity(index);
+  var actualValue = isBigIntArray(O) ? toBigInt(value) : +value;
+  return arrayWith(O, getTypedArrayConstructor(O), relativeIndex, actualValue);
+} }['with'], !PROPER_ORDER);
 
 
 /***/ }),
@@ -22603,6 +23111,67 @@ __nccwpck_require__(61060);
 
 // TODO: Remove from `core-js@4`
 __nccwpck_require__(96787);
+
+
+/***/ }),
+
+/***/ 71570:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var DESCRIPTORS = __nccwpck_require__(35144);
+var defineBuiltInAccessor = __nccwpck_require__(42980);
+var isDetached = __nccwpck_require__(18346);
+
+var ArrayBufferPrototype = ArrayBuffer.prototype;
+
+if (DESCRIPTORS && !('detached' in ArrayBufferPrototype)) {
+  defineBuiltInAccessor(ArrayBufferPrototype, 'detached', {
+    configurable: true,
+    get: function detached() {
+      return isDetached(this);
+    }
+  });
+}
+
+
+/***/ }),
+
+/***/ 699:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var $ = __nccwpck_require__(2374);
+var $transfer = __nccwpck_require__(66304);
+
+// `ArrayBuffer.prototype.transferToFixedLength` method
+// https://tc39.es/proposal-arraybuffer-transfer/#sec-arraybuffer.prototype.transfertofixedlength
+if ($transfer) $({ target: 'ArrayBuffer', proto: true }, {
+  transferToFixedLength: function transferToFixedLength() {
+    return $transfer(this, arguments.length ? arguments[0] : undefined, false);
+  }
+});
+
+
+/***/ }),
+
+/***/ 15467:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var $ = __nccwpck_require__(2374);
+var $transfer = __nccwpck_require__(66304);
+
+// `ArrayBuffer.prototype.transfer` method
+// https://tc39.es/proposal-arraybuffer-transfer/#sec-arraybuffer.prototype.transfer
+if ($transfer) $({ target: 'ArrayBuffer', proto: true }, {
+  transfer: function transfer() {
+    return $transfer(this, arguments.length ? arguments[0] : undefined, true);
+  }
+});
 
 
 /***/ }),
@@ -22887,24 +23456,8 @@ if (DESCRIPTORS) {
 /***/ 20816:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
-"use strict";
-
-var $ = __nccwpck_require__(2374);
-var arrayToReversed = __nccwpck_require__(63403);
-var toIndexedObject = __nccwpck_require__(6706);
-var addToUnscopables = __nccwpck_require__(34163);
-
-var $Array = Array;
-
-// `Array.prototype.toReversed` method
-// https://tc39.es/proposal-change-array-by-copy/#sec-array.prototype.toReversed
-$({ target: 'Array', proto: true }, {
-  toReversed: function toReversed() {
-    return arrayToReversed(toIndexedObject(this), $Array);
-  }
-});
-
-addToUnscopables('toReversed');
+// TODO: Remove from `core-js@4`
+__nccwpck_require__(70467);
 
 
 /***/ }),
@@ -22912,31 +23465,8 @@ addToUnscopables('toReversed');
 /***/ 59642:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
-"use strict";
-
-var $ = __nccwpck_require__(2374);
-var uncurryThis = __nccwpck_require__(68610);
-var aCallable = __nccwpck_require__(43466);
-var toIndexedObject = __nccwpck_require__(6706);
-var arrayFromConstructorAndList = __nccwpck_require__(19635);
-var getVirtual = __nccwpck_require__(24496);
-var addToUnscopables = __nccwpck_require__(34163);
-
-var $Array = Array;
-var sort = uncurryThis(getVirtual('Array').sort);
-
-// `Array.prototype.toSorted` method
-// https://tc39.es/proposal-change-array-by-copy/#sec-array.prototype.toSorted
-$({ target: 'Array', proto: true }, {
-  toSorted: function toSorted(compareFn) {
-    if (compareFn !== undefined) aCallable(compareFn);
-    var O = toIndexedObject(this);
-    var A = arrayFromConstructorAndList($Array, O);
-    return sort(A, compareFn);
-  }
-});
-
-addToUnscopables('toSorted');
+// TODO: Remove from `core-js@4`
+__nccwpck_require__(68102);
 
 
 /***/ }),
@@ -22944,51 +23474,8 @@ addToUnscopables('toSorted');
 /***/ 61574:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
-"use strict";
-
-var $ = __nccwpck_require__(2374);
-var addToUnscopables = __nccwpck_require__(34163);
-var doesNotExceedSafeInteger = __nccwpck_require__(68909);
-var lengthOfArrayLike = __nccwpck_require__(18861);
-var toAbsoluteIndex = __nccwpck_require__(71349);
-var toIndexedObject = __nccwpck_require__(6706);
-var toIntegerOrInfinity = __nccwpck_require__(4391);
-
-var $Array = Array;
-var max = Math.max;
-var min = Math.min;
-
-// `Array.prototype.toSpliced` method
-// https://tc39.es/proposal-change-array-by-copy/#sec-array.prototype.toSpliced
-$({ target: 'Array', proto: true }, {
-  toSpliced: function toSpliced(start, deleteCount /* , ...items */) {
-    var O = toIndexedObject(this);
-    var len = lengthOfArrayLike(O);
-    var actualStart = toAbsoluteIndex(start, len);
-    var argumentsLength = arguments.length;
-    var k = 0;
-    var insertCount, actualDeleteCount, newLen, A;
-    if (argumentsLength === 0) {
-      insertCount = actualDeleteCount = 0;
-    } else if (argumentsLength === 1) {
-      insertCount = 0;
-      actualDeleteCount = len - actualStart;
-    } else {
-      insertCount = argumentsLength - 2;
-      actualDeleteCount = min(max(toIntegerOrInfinity(deleteCount), 0), len - actualStart);
-    }
-    newLen = doesNotExceedSafeInteger(len + insertCount - actualDeleteCount);
-    A = $Array(newLen);
-
-    for (; k < actualStart; k++) A[k] = O[k];
-    for (; k < actualStart + insertCount; k++) A[k] = arguments[k - actualStart + 2];
-    for (; k < newLen; k++) A[k] = O[k + actualDeleteCount - insertCount];
-
-    return A;
-  }
-});
-
-addToUnscopables('toSpliced');
+// TODO: Remove from `core-js@4`
+__nccwpck_require__(97205);
 
 
 /***/ }),
@@ -23016,21 +23503,8 @@ addToUnscopables('uniqueBy');
 /***/ 17389:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
-"use strict";
-
-var $ = __nccwpck_require__(2374);
-var arrayWith = __nccwpck_require__(13188);
-var toIndexedObject = __nccwpck_require__(6706);
-
-var $Array = Array;
-
-// `Array.prototype.with` method
-// https://tc39.es/proposal-change-array-by-copy/#sec-array.prototype.with
-$({ target: 'Array', proto: true }, {
-  'with': function (index, value) {
-    return arrayWith(toIndexedObject(this), $Array, index, value);
-  }
-});
+// TODO: Remove from `core-js@4`
+__nccwpck_require__(71513);
 
 
 /***/ }),
@@ -23045,15 +23519,13 @@ var $ = __nccwpck_require__(2374);
 var DESCRIPTORS = __nccwpck_require__(35144);
 var getBuiltIn = __nccwpck_require__(86632);
 var aCallable = __nccwpck_require__(43466);
-var anObject = __nccwpck_require__(19232);
 var anInstance = __nccwpck_require__(19324);
-var isNullOrUndefined = __nccwpck_require__(43927);
 var defineBuiltIn = __nccwpck_require__(56986);
 var defineBuiltIns = __nccwpck_require__(69413);
 var defineBuiltInAccessor = __nccwpck_require__(42980);
 var wellKnownSymbol = __nccwpck_require__(48322);
 var InternalStateModule = __nccwpck_require__(31202);
-var DisposableStackHelpers = __nccwpck_require__(77419);
+var addDisposableResource = __nccwpck_require__(99113);
 
 var Promise = getBuiltIn('Promise');
 var SuppressedError = getBuiltIn('SuppressedError');
@@ -23061,9 +23533,6 @@ var $ReferenceError = ReferenceError;
 
 var ASYNC_DISPOSE = wellKnownSymbol('asyncDispose');
 var TO_STRING_TAG = wellKnownSymbol('toStringTag');
-
-var getDisposeMethod = DisposableStackHelpers.getDisposeMethod;
-var addDisposableResource = DisposableStackHelpers.addDisposableResource;
 
 var ASYNC_DISPOSABLE_STACK = 'AsyncDisposableStack';
 var setInternalState = InternalStateModule.set;
@@ -23132,11 +23601,8 @@ defineBuiltIns(AsyncDisposableStackPrototype, {
   use: function use(value) {
     var internalState = getAsyncDisposableStackInternalState(this);
     if (internalState.state == DISPOSED) throw $ReferenceError(ALREADY_DISPOSED);
-    if (!isNullOrUndefined(value)) {
-      anObject(value);
-      var method = aCallable(getDisposeMethod(value, HINT));
-      addDisposableResource(internalState, value, HINT, method);
-    } return value;
+    addDisposableResource(internalState, value, HINT);
+    return value;
   },
   adopt: function adopt(value, onDispose) {
     var internalState = getAsyncDisposableStackInternalState(this);
@@ -23260,7 +23726,7 @@ if (IS_PURE || !hasOwn(AsyncIteratorPrototype, 'constructor') || AsyncIteratorPr
 }
 
 // `AsyncIterator` constructor
-// https://github.com/tc39/proposal-iterator-helpers
+// https://github.com/tc39/proposal-async-iterator-helpers
 $({ global: true, constructor: true, forced: IS_PURE }, {
   AsyncIterator: AsyncIteratorConstructor
 });
@@ -23312,7 +23778,7 @@ var AsyncIteratorProxy = createAsyncIteratorProxy(function (Promise) {
 });
 
 // `AsyncIterator.prototype.drop` method
-// https://github.com/tc39/proposal-iterator-helpers
+// https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'AsyncIterator', proto: true, real: true }, {
   drop: function drop(limit) {
     return new AsyncIteratorProxy(getIteratorDirect(this), {
@@ -23333,7 +23799,7 @@ var $ = __nccwpck_require__(2374);
 var $every = (__nccwpck_require__(72015).every);
 
 // `AsyncIterator.prototype.every` method
-// https://github.com/tc39/proposal-iterator-helpers
+// https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'AsyncIterator', proto: true, real: true }, {
   every: function every(predicate) {
     return $every(this, predicate);
@@ -23403,7 +23869,7 @@ var AsyncIteratorProxy = createAsyncIteratorProxy(function (Promise) {
 });
 
 // `AsyncIterator.prototype.filter` method
-// https://github.com/tc39/proposal-iterator-helpers
+// https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'AsyncIterator', proto: true, real: true }, {
   filter: function filter(predicate) {
     return new AsyncIteratorProxy(getIteratorDirect(this), {
@@ -23424,7 +23890,7 @@ var $ = __nccwpck_require__(2374);
 var $find = (__nccwpck_require__(72015).find);
 
 // `AsyncIterator.prototype.find` method
-// https://github.com/tc39/proposal-iterator-helpers
+// https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'AsyncIterator', proto: true, real: true }, {
   find: function find(predicate) {
     return $find(this, predicate);
@@ -23514,7 +23980,7 @@ var AsyncIteratorProxy = createAsyncIteratorProxy(function (Promise) {
 });
 
 // `AsyncIterator.prototype.flaMap` method
-// https://github.com/tc39/proposal-iterator-helpers
+// https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'AsyncIterator', proto: true, real: true }, {
   flatMap: function flatMap(mapper) {
     return new AsyncIteratorProxy(getIteratorDirect(this), {
@@ -23536,7 +24002,7 @@ var $ = __nccwpck_require__(2374);
 var $forEach = (__nccwpck_require__(72015).forEach);
 
 // `AsyncIterator.prototype.forEach` method
-// https://github.com/tc39/proposal-iterator-helpers
+// https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'AsyncIterator', proto: true, real: true }, {
   forEach: function forEach(fn) {
     return $forEach(this, fn);
@@ -23557,7 +24023,7 @@ var AsyncIteratorPrototype = __nccwpck_require__(97840);
 var WrapAsyncIterator = __nccwpck_require__(72384);
 
 // `AsyncIterator.from` method
-// https://github.com/tc39/proposal-iterator-helpers
+// https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'AsyncIterator', stat: true }, {
   from: function from(O) {
     var iteratorRecord = getAsyncIteratorFlattenable(typeof O == 'string' ? toObject(O) : O);
@@ -23593,7 +24059,7 @@ var $ = __nccwpck_require__(2374);
 var map = __nccwpck_require__(71821);
 
 // `AsyncIterator.prototype.map` method
-// https://github.com/tc39/proposal-iterator-helpers
+// https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'AsyncIterator', proto: true, real: true }, {
   map: map
 });
@@ -23620,7 +24086,7 @@ var Promise = getBuiltIn('Promise');
 var $TypeError = TypeError;
 
 // `AsyncIterator.prototype.reduce` method
-// https://github.com/tc39/proposal-iterator-helpers
+// https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'AsyncIterator', proto: true, real: true }, {
   reduce: function reduce(reducer /* , initialValue */) {
     var record = getIteratorDirect(this);
@@ -23683,7 +24149,7 @@ var $ = __nccwpck_require__(2374);
 var $some = (__nccwpck_require__(72015).some);
 
 // `AsyncIterator.prototype.some` method
-// https://github.com/tc39/proposal-iterator-helpers
+// https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'AsyncIterator', proto: true, real: true }, {
   some: function some(predicate) {
     return $some(this, predicate);
@@ -23734,7 +24200,7 @@ var AsyncIteratorProxy = createAsyncIteratorProxy(function (Promise) {
 });
 
 // `AsyncIterator.prototype.take` method
-// https://github.com/tc39/proposal-iterator-helpers
+// https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'AsyncIterator', proto: true, real: true }, {
   take: function take(limit) {
     return new AsyncIteratorProxy(getIteratorDirect(this), {
@@ -23755,7 +24221,7 @@ var $ = __nccwpck_require__(2374);
 var $toArray = (__nccwpck_require__(72015).toArray);
 
 // `AsyncIterator.prototype.toArray` method
-// https://github.com/tc39/proposal-iterator-helpers
+// https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'AsyncIterator', proto: true, real: true }, {
   toArray: function toArray() {
     return $toArray(this, undefined, []);
@@ -23776,6 +24242,7 @@ var NumericRangeIterator = __nccwpck_require__(904);
 
 // `BigInt.range` method
 // https://github.com/tc39/proposal-Number.range
+// TODO: Remove from `core-js@4`
 if (typeof BigInt == 'function') {
   $({ target: 'BigInt', stat: true, forced: true }, {
     range: function range(start, end, option) {
@@ -23842,24 +24309,19 @@ var $ = __nccwpck_require__(2374);
 var DESCRIPTORS = __nccwpck_require__(35144);
 var getBuiltIn = __nccwpck_require__(86632);
 var aCallable = __nccwpck_require__(43466);
-var anObject = __nccwpck_require__(19232);
 var anInstance = __nccwpck_require__(19324);
-var isNullOrUndefined = __nccwpck_require__(43927);
 var defineBuiltIn = __nccwpck_require__(56986);
 var defineBuiltIns = __nccwpck_require__(69413);
 var defineBuiltInAccessor = __nccwpck_require__(42980);
 var wellKnownSymbol = __nccwpck_require__(48322);
 var InternalStateModule = __nccwpck_require__(31202);
-var DisposableStackHelpers = __nccwpck_require__(77419);
+var addDisposableResource = __nccwpck_require__(99113);
 
 var SuppressedError = getBuiltIn('SuppressedError');
 var $ReferenceError = ReferenceError;
 
 var DISPOSE = wellKnownSymbol('dispose');
 var TO_STRING_TAG = wellKnownSymbol('toStringTag');
-
-var getDisposeMethod = DisposableStackHelpers.getDisposeMethod;
-var addDisposableResource = DisposableStackHelpers.addDisposableResource;
 
 var DISPOSABLE_STACK = 'DisposableStack';
 var setInternalState = InternalStateModule.set;
@@ -23913,11 +24375,8 @@ defineBuiltIns(DisposableStackPrototype, {
   use: function use(value) {
     var internalState = getDisposableStackInternalState(this);
     if (internalState.state == DISPOSED) throw $ReferenceError(ALREADY_DISPOSED);
-    if (!isNullOrUndefined(value)) {
-      anObject(value);
-      var method = aCallable(getDisposeMethod(value, HINT));
-      addDisposableResource(internalState, value, HINT, method);
-    } return value;
+    addDisposableResource(internalState, value, HINT);
+    return value;
   },
   adopt: function adopt(value, onDispose) {
     var internalState = getDisposableStackInternalState(this);
@@ -23956,6 +24415,21 @@ defineBuiltIn(DisposableStackPrototype, TO_STRING_TAG, DISPOSABLE_STACK, { nonWr
 
 $({ global: true, constructor: true }, {
   DisposableStack: $DisposableStack
+});
+
+
+/***/ }),
+
+/***/ 14649:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var $ = __nccwpck_require__(2374);
+var demethodize = __nccwpck_require__(63941);
+
+// `Function.prototype.demethodize` method
+// https://github.com/js-choi/proposal-function-demethodize
+$({ target: 'Function', proto: true, forced: true }, {
+  demethodize: demethodize
 });
 
 
@@ -24016,15 +24490,13 @@ $({ target: 'Function', stat: true, forced: true }, {
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var $ = __nccwpck_require__(2374);
-var uncurryThis = __nccwpck_require__(68610);
-var aCallable = __nccwpck_require__(43466);
+var demethodize = __nccwpck_require__(63941);
 
 // `Function.prototype.unThis` method
-// https://github.com/js-choi/proposal-function-un-this
-$({ target: 'Function', proto: true, forced: true }, {
-  unThis: function unThis() {
-    return uncurryThis(aCallable(this));
-  }
+// https://github.com/js-choi/proposal-function-demethodize
+// TODO: Remove from `core-js@4`
+$({ target: 'Function', proto: true, forced: true, name: 'demethodize' }, {
+  unThis: demethodize
 });
 
 
@@ -24399,6 +24871,30 @@ $({ target: 'Iterator', proto: true, real: true }, {
 
 /***/ }),
 
+/***/ 68967:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+/* eslint-disable es/no-bigint -- safe */
+var $ = __nccwpck_require__(2374);
+var NumericRangeIterator = __nccwpck_require__(904);
+
+var $TypeError = TypeError;
+
+// `Iterator.range` method
+// https://github.com/tc39/proposal-Number.range
+$({ target: 'Iterator', stat: true, forced: true }, {
+  range: function range(start, end, option) {
+    if (typeof start == 'number') return new NumericRangeIterator(start, end, option, 'number', 0, 1);
+    if (typeof start == 'bigint') return new NumericRangeIterator(start, end, option, 'bigint', BigInt(0), BigInt(1));
+    throw $TypeError('Incorrect Iterator.range arguments');
+  }
+});
+
+
+/***/ }),
+
 /***/ 76075:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -24536,10 +25032,378 @@ var WrapAsyncIterator = __nccwpck_require__(72384);
 var getIteratorDirect = __nccwpck_require__(94737);
 
 // `Iterator.prototype.toAsync` method
-// https://github.com/tc39/proposal-iterator-helpers
+// https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'Iterator', proto: true, real: true }, {
   toAsync: function toAsync() {
     return new WrapAsyncIterator(getIteratorDirect(new AsyncFromSyncIterator(getIteratorDirect(this))));
+  }
+});
+
+
+/***/ }),
+
+/***/ 39215:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var $ = __nccwpck_require__(2374);
+var NATIVE_RAW_JSON = __nccwpck_require__(35352);
+var isRawJSON = __nccwpck_require__(45277);
+
+// `JSON.parse` method
+// https://tc39.es/proposal-json-parse-with-source/#sec-json.israwjson
+// https://github.com/tc39/proposal-json-parse-with-source
+$({ target: 'JSON', stat: true, forced: !NATIVE_RAW_JSON }, {
+  isRawJSON: isRawJSON
+});
+
+
+/***/ }),
+
+/***/ 44150:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var $ = __nccwpck_require__(2374);
+var DESCRIPTORS = __nccwpck_require__(35144);
+var global = __nccwpck_require__(31157);
+var getBuiltIn = __nccwpck_require__(86632);
+var uncurryThis = __nccwpck_require__(68610);
+var call = __nccwpck_require__(7065);
+var isCallable = __nccwpck_require__(63774);
+var isObject = __nccwpck_require__(785);
+var isArray = __nccwpck_require__(2343);
+var hasOwn = __nccwpck_require__(97295);
+var toString = __nccwpck_require__(45623);
+var lengthOfArrayLike = __nccwpck_require__(18861);
+var createProperty = __nccwpck_require__(20686);
+var fails = __nccwpck_require__(64222);
+var parseJSONString = __nccwpck_require__(26286);
+var NATIVE_SYMBOL = __nccwpck_require__(6968);
+
+var JSON = global.JSON;
+var Number = global.Number;
+var SyntaxError = global.SyntaxError;
+var nativeParse = JSON && JSON.parse;
+var enumerableOwnProperties = getBuiltIn('Object', 'keys');
+// eslint-disable-next-line es/no-object-getownpropertydescriptor -- safe
+var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+var at = uncurryThis(''.charAt);
+var slice = uncurryThis(''.slice);
+var exec = uncurryThis(/./.exec);
+var push = uncurryThis([].push);
+
+var IS_DIGIT = /^\d$/;
+var IS_NON_ZERO_DIGIT = /^[1-9]$/;
+var IS_NUMBER_START = /^(-|\d)$/;
+var IS_WHITESPACE = /^[\t\n\r ]$/;
+
+var PRIMITIVE = 0;
+var OBJECT = 1;
+
+var $parse = function (source, reviver) {
+  source = toString(source);
+  var context = new Context(source, 0, '');
+  var root = context.parse();
+  var value = root.value;
+  var endIndex = context.skip(IS_WHITESPACE, root.end);
+  if (endIndex < source.length) {
+    throw SyntaxError('Unexpected extra character: "' + at(source, endIndex) + '" after the parsed data at: ' + endIndex);
+  }
+  return isCallable(reviver) ? internalize({ '': value }, '', reviver, root) : value;
+};
+
+var internalize = function (holder, name, reviver, node) {
+  var val = holder[name];
+  var unmodified = node && val === node.value;
+  var context = unmodified && typeof node.source == 'string' ? { source: node.source } : {};
+  var elementRecordsLen, keys, len, i, P;
+  if (isObject(val)) {
+    var nodeIsArray = isArray(val);
+    var nodes = unmodified ? node.nodes : nodeIsArray ? [] : {};
+    if (nodeIsArray) {
+      elementRecordsLen = nodes.length;
+      len = lengthOfArrayLike(val);
+      for (i = 0; i < len; i++) {
+        internalizeProperty(val, i, internalize(val, '' + i, reviver, i < elementRecordsLen ? nodes[i] : undefined));
+      }
+    } else {
+      keys = enumerableOwnProperties(val);
+      len = lengthOfArrayLike(keys);
+      for (i = 0; i < len; i++) {
+        P = keys[i];
+        internalizeProperty(val, P, internalize(val, P, reviver, hasOwn(nodes, P) ? nodes[P] : undefined));
+      }
+    }
+  }
+  return call(reviver, holder, name, val, context);
+};
+
+var internalizeProperty = function (object, key, value) {
+  if (DESCRIPTORS) {
+    var descriptor = getOwnPropertyDescriptor(object, key);
+    if (descriptor && !descriptor.configurable) return;
+  }
+  if (value === undefined) delete object[key];
+  else createProperty(object, key, value);
+};
+
+var Node = function (value, end, source, nodes) {
+  this.value = value;
+  this.end = end;
+  this.source = source;
+  this.nodes = nodes;
+};
+
+var Context = function (source, index) {
+  this.source = source;
+  this.index = index;
+};
+
+// https://www.json.org/json-en.html
+Context.prototype = {
+  fork: function (nextIndex) {
+    return new Context(this.source, nextIndex);
+  },
+  parse: function () {
+    var source = this.source;
+    var i = this.skip(IS_WHITESPACE, this.index);
+    var fork = this.fork(i);
+    var chr = at(source, i);
+    if (exec(IS_NUMBER_START, chr)) return fork.number();
+    switch (chr) {
+      case '{':
+        return fork.object();
+      case '[':
+        return fork.array();
+      case '"':
+        return fork.string();
+      case 't':
+        return fork.keyword(true);
+      case 'f':
+        return fork.keyword(false);
+      case 'n':
+        return fork.keyword(null);
+    } throw SyntaxError('Unexpected character: "' + chr + '" at: ' + i);
+  },
+  node: function (type, value, start, end, nodes) {
+    return new Node(value, end, type ? null : slice(this.source, start, end), nodes);
+  },
+  object: function () {
+    var source = this.source;
+    var i = this.index + 1;
+    var expectKeypair = false;
+    var object = {};
+    var nodes = {};
+    while (i < source.length) {
+      i = this.until(['"', '}'], i);
+      if (at(source, i) == '}' && !expectKeypair) {
+        i++;
+        break;
+      }
+      // Parsing the key
+      var result = this.fork(i).string();
+      var key = result.value;
+      i = result.end;
+      i = this.until([':'], i) + 1;
+      // Parsing value
+      i = this.skip(IS_WHITESPACE, i);
+      result = this.fork(i).parse();
+      createProperty(nodes, key, result);
+      createProperty(object, key, result.value);
+      i = this.until([',', '}'], result.end);
+      var chr = at(source, i);
+      if (chr == ',') {
+        expectKeypair = true;
+        i++;
+      } else if (chr == '}') {
+        i++;
+        break;
+      }
+    }
+    return this.node(OBJECT, object, this.index, i, nodes);
+  },
+  array: function () {
+    var source = this.source;
+    var i = this.index + 1;
+    var expectElement = false;
+    var array = [];
+    var nodes = [];
+    while (i < source.length) {
+      i = this.skip(IS_WHITESPACE, i);
+      if (at(source, i) == ']' && !expectElement) {
+        i++;
+        break;
+      }
+      var result = this.fork(i).parse();
+      push(nodes, result);
+      push(array, result.value);
+      i = this.until([',', ']'], result.end);
+      if (at(source, i) == ',') {
+        expectElement = true;
+        i++;
+      } else if (at(source, i) == ']') {
+        i++;
+        break;
+      }
+    }
+    return this.node(OBJECT, array, this.index, i, nodes);
+  },
+  string: function () {
+    var index = this.index;
+    var parsed = parseJSONString(this.source, this.index + 1);
+    return this.node(PRIMITIVE, parsed.value, index, parsed.end);
+  },
+  number: function () {
+    var source = this.source;
+    var startIndex = this.index;
+    var i = startIndex;
+    if (at(source, i) == '-') i++;
+    if (at(source, i) == '0') i++;
+    else if (exec(IS_NON_ZERO_DIGIT, at(source, i))) i = this.skip(IS_DIGIT, ++i);
+    else throw SyntaxError('Failed to parse number at: ' + i);
+    if (at(source, i) == '.') i = this.skip(IS_DIGIT, ++i);
+    if (at(source, i) == 'e' || at(source, i) == 'E') {
+      i++;
+      if (at(source, i) == '+' || at(source, i) == '-') i++;
+      var exponentStartIndex = i;
+      i = this.skip(IS_DIGIT, i);
+      if (exponentStartIndex == i) throw SyntaxError("Failed to parse number's exponent value at: " + i);
+    }
+    return this.node(PRIMITIVE, Number(slice(source, startIndex, i)), startIndex, i);
+  },
+  keyword: function (value) {
+    var keyword = '' + value;
+    var index = this.index;
+    var endIndex = index + keyword.length;
+    if (slice(this.source, index, endIndex) != keyword) throw SyntaxError('Failed to parse value at: ' + index);
+    return this.node(PRIMITIVE, value, index, endIndex);
+  },
+  skip: function (regex, i) {
+    var source = this.source;
+    for (; i < source.length; i++) if (!exec(regex, at(source, i))) break;
+    return i;
+  },
+  until: function (array, i) {
+    i = this.skip(IS_WHITESPACE, i);
+    var chr = at(this.source, i);
+    for (var j = 0; j < array.length; j++) if (array[j] == chr) return i;
+    throw SyntaxError('Unexpected character: "' + chr + '" at: ' + i);
+  }
+};
+
+var NO_SOURCE_SUPPORT = fails(function () {
+  var unsafeInt = '9007199254740993';
+  var source;
+  nativeParse(unsafeInt, function (key, value, context) {
+    source = context.source;
+  });
+  return source !== unsafeInt;
+});
+
+var PROPER_BASE_PARSE = NATIVE_SYMBOL && !fails(function () {
+  // Safari 9 bug
+  return 1 / nativeParse('-0 \t') !== -Infinity;
+});
+
+// `JSON.parse` method
+// https://tc39.es/ecma262/#sec-json.parse
+// https://github.com/tc39/proposal-json-parse-with-source
+$({ target: 'JSON', stat: true, forced: NO_SOURCE_SUPPORT }, {
+  parse: function parse(text, reviver) {
+    return PROPER_BASE_PARSE && !isCallable(reviver) ? nativeParse(text) : $parse(text, reviver);
+  }
+});
+
+
+/***/ }),
+
+/***/ 761:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var $ = __nccwpck_require__(2374);
+var FREEZING = __nccwpck_require__(1308);
+var NATIVE_RAW_JSON = __nccwpck_require__(35352);
+var getBuiltIn = __nccwpck_require__(86632);
+var call = __nccwpck_require__(7065);
+var uncurryThis = __nccwpck_require__(68610);
+var isCallable = __nccwpck_require__(63774);
+var isRawJSON = __nccwpck_require__(45277);
+var toString = __nccwpck_require__(45623);
+var createProperty = __nccwpck_require__(20686);
+var parseJSONString = __nccwpck_require__(26286);
+var getReplacerFunction = __nccwpck_require__(232);
+var uid = __nccwpck_require__(46164);
+var setInternalState = (__nccwpck_require__(31202).set);
+
+var $String = String;
+var $SyntaxError = SyntaxError;
+var parse = getBuiltIn('JSON', 'parse');
+var $stringify = getBuiltIn('JSON', 'stringify');
+var create = getBuiltIn('Object', 'create');
+var freeze = getBuiltIn('Object', 'freeze');
+var at = uncurryThis(''.charAt);
+var slice = uncurryThis(''.slice);
+var exec = uncurryThis(/./.exec);
+var push = uncurryThis([].push);
+
+var MARK = uid();
+var MARK_LENGTH = MARK.length;
+var ERROR_MESSAGE = 'Unacceptable as raw JSON';
+var IS_WHITESPACE = /^[\t\n\r ]$/;
+
+// `JSON.parse` method
+// https://tc39.es/proposal-json-parse-with-source/#sec-json.israwjson
+// https://github.com/tc39/proposal-json-parse-with-source
+$({ target: 'JSON', stat: true, forced: !NATIVE_RAW_JSON }, {
+  rawJSON: function rawJSON(text) {
+    var jsonString = toString(text);
+    if (jsonString == '' || exec(IS_WHITESPACE, at(jsonString, 0)) || exec(IS_WHITESPACE, at(jsonString, jsonString.length - 1))) {
+      throw $SyntaxError(ERROR_MESSAGE);
+    }
+    var parsed = parse(jsonString);
+    if (typeof parsed == 'object' && parsed !== null) throw $SyntaxError(ERROR_MESSAGE);
+    var obj = create(null);
+    setInternalState(obj, { type: 'RawJSON' });
+    createProperty(obj, 'rawJSON', jsonString);
+    return FREEZING ? freeze(obj) : obj;
+  }
+});
+
+// `JSON.stringify` method
+// https://tc39.es/ecma262/#sec-json.stringify
+// https://github.com/tc39/proposal-json-parse-with-source
+if ($stringify) $({ target: 'JSON', stat: true, arity: 3, forced: !NATIVE_RAW_JSON }, {
+  stringify: function stringify(text, replacer, space) {
+    var replacerFunction = getReplacerFunction(replacer);
+    var rawStrings = [];
+
+    var json = $stringify(text, function (key, value) {
+      // some old implementations (like WebKit) could pass numbers as keys
+      var v = isCallable(replacerFunction) ? call(replacerFunction, this, $String(key), value) : value;
+      return isRawJSON(v) ? MARK + (push(rawStrings, v.rawJSON) - 1) : v;
+    }, space);
+
+    if (typeof json != 'string') return json;
+
+    var result = '';
+    var length = json.length;
+
+    for (var i = 0; i < length; i++) {
+      var chr = at(json, i);
+      if (chr == '"') {
+        var end = parseJSONString(json, ++i).end - 1;
+        var string = slice(json, i, end);
+        result += slice(string, 0, MARK_LENGTH) == MARK
+          ? rawStrings[slice(string, MARK_LENGTH)]
+          : '"' + string + '"';
+        i = end;
+      } else result += chr;
+    }
+
+    return result;
   }
 });
 
@@ -25405,6 +26269,7 @@ var NumericRangeIterator = __nccwpck_require__(904);
 
 // `Number.range` method
 // https://github.com/tc39/proposal-Number.range
+// TODO: Remove from `core-js@4`
 $({ target: 'Number', stat: true, forced: true }, {
   range: function range(start, end, option) {
     return new NumericRangeIterator(start, end, option, 'number', 0, 1);
@@ -26906,21 +27771,30 @@ __nccwpck_require__(85528);
 "use strict";
 
 var $ = __nccwpck_require__(2374);
+var call = __nccwpck_require__(7065);
 var uncurryThis = __nccwpck_require__(68610);
 var requireObjectCoercible = __nccwpck_require__(19821);
 var toString = __nccwpck_require__(45623);
+var fails = __nccwpck_require__(64222);
 
 var $Array = Array;
 var charAt = uncurryThis(''.charAt);
 var charCodeAt = uncurryThis(''.charCodeAt);
 var join = uncurryThis([].join);
+var $toWellFormed = ''.toWellFormed;
 var REPLACEMENT_CHARACTER = '\uFFFD';
+
+// Safari bug
+var TO_STRING_CONVERSION_BUG = $toWellFormed && fails(function () {
+  return call($toWellFormed, 1) !== '1';
+});
 
 // `String.prototype.toWellFormed` method
 // https://github.com/tc39/proposal-is-usv-string
-$({ target: 'String', proto: true }, {
+$({ target: 'String', proto: true, forced: TO_STRING_CONVERSION_BUG }, {
   toWellFormed: function toWellFormed() {
     var S = toString(requireObjectCoercible(this));
+    if (TO_STRING_CONVERSION_BUG) return call($toWellFormed, S);
     var length = S.length;
     var result = $Array(length);
     for (var i = 0; i < length; i++) {
@@ -26954,7 +27828,6 @@ var copyConstructorProperties = __nccwpck_require__(48706);
 var create = __nccwpck_require__(94355);
 var createNonEnumerableProperty = __nccwpck_require__(96996);
 var createPropertyDescriptor = __nccwpck_require__(29607);
-var installErrorCause = __nccwpck_require__(4679);
 var installErrorStack = __nccwpck_require__(97464);
 var normalizeStringArgument = __nccwpck_require__(64070);
 var wellKnownSymbol = __nccwpck_require__(48322);
@@ -26962,7 +27835,7 @@ var wellKnownSymbol = __nccwpck_require__(48322);
 var TO_STRING_TAG = wellKnownSymbol('toStringTag');
 var $Error = Error;
 
-var $SuppressedError = function SuppressedError(error, suppressed, message /* , options */) {
+var $SuppressedError = function SuppressedError(error, suppressed, message) {
   var isInstance = isPrototypeOf(SuppressedErrorPrototype, this);
   var that;
   if (setPrototypeOf) {
@@ -26973,7 +27846,6 @@ var $SuppressedError = function SuppressedError(error, suppressed, message /* , 
   }
   if (message !== undefined) createNonEnumerableProperty(that, 'message', normalizeStringArgument(message));
   installErrorStack(that, $SuppressedError, that.stack, 1);
-  if (arguments.length > 3) installErrorCause(that, arguments[3]);
   createNonEnumerableProperty(that, 'error', error);
   createNonEnumerableProperty(that, 'suppressed', suppressed);
   return that;
@@ -27017,6 +27889,75 @@ var defineWellKnownSymbol = __nccwpck_require__(79586);
 // `Symbol.dispose` well-known symbol
 // https://github.com/tc39/proposal-explicit-resource-management
 defineWellKnownSymbol('dispose');
+
+
+/***/ }),
+
+/***/ 38068:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var $ = __nccwpck_require__(2374);
+var getBuiltIn = __nccwpck_require__(86632);
+var uncurryThis = __nccwpck_require__(68610);
+
+var Symbol = getBuiltIn('Symbol');
+var keyFor = Symbol.keyFor;
+var thisSymbolValue = uncurryThis(Symbol.prototype.valueOf);
+
+// `Symbol.isRegistered` method
+// https://tc39.es/proposal-symbol-predicates/#sec-symbol-isregistered
+$({ target: 'Symbol', stat: true }, {
+  isRegistered: function isRegistered(value) {
+    try {
+      return keyFor(thisSymbolValue(value)) !== undefined;
+    } catch (error) {
+      return false;
+    }
+  }
+});
+
+
+/***/ }),
+
+/***/ 38661:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var $ = __nccwpck_require__(2374);
+var shared = __nccwpck_require__(13023);
+var getBuiltIn = __nccwpck_require__(86632);
+var uncurryThis = __nccwpck_require__(68610);
+var isSymbol = __nccwpck_require__(9370);
+var wellKnownSymbol = __nccwpck_require__(48322);
+
+var Symbol = getBuiltIn('Symbol');
+var $isWellKnown = Symbol.isWellKnown;
+var getOwnPropertyNames = getBuiltIn('Object', 'getOwnPropertyNames');
+var thisSymbolValue = uncurryThis(Symbol.prototype.valueOf);
+var WellKnownSymbolsStore = shared('wks');
+
+for (var i = 0, symbolKeys = getOwnPropertyNames(Symbol), symbolKeysLength = symbolKeys.length; i < symbolKeysLength; i++) {
+  // some old engines throws on access to some keys like `arguments` or `caller`
+  try {
+    var symbolKey = symbolKeys[i];
+    if (isSymbol(Symbol[symbolKey])) wellKnownSymbol(symbolKey);
+  } catch (error) { /* empty */ }
+}
+
+// `Symbol.isWellKnown` method
+// https://tc39.es/proposal-symbol-predicates/#sec-symbol-iswellknown
+// We should patch it for newly added well-known symbols. If it's not required, this module just will not be injected
+$({ target: 'Symbol', stat: true, forced: true }, {
+  isWellKnown: function isWellKnown(value) {
+    if ($isWellKnown && $isWellKnown(value)) return true;
+    try {
+      var symbol = thisSymbolValue(value);
+      for (var j = 0, keys = getOwnPropertyNames(WellKnownSymbolsStore), keysLength = keys.length; j < keysLength; j++) {
+        if (WellKnownSymbolsStore[keys[j]] == symbol) return true;
+      }
+    } catch (error) { /* empty */ }
+    return false;
+  }
+});
 
 
 /***/ }),
@@ -27225,20 +28166,8 @@ exportTypedArrayMethod('groupBy', function groupBy(callbackfn /* , thisArg */) {
 /***/ 62409:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
-"use strict";
-
-var arrayToReversed = __nccwpck_require__(63403);
-var ArrayBufferViewCore = __nccwpck_require__(4016);
-
-var aTypedArray = ArrayBufferViewCore.aTypedArray;
-var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
-var getTypedArrayConstructor = ArrayBufferViewCore.getTypedArrayConstructor;
-
-// `%TypedArray%.prototype.toReversed` method
-// https://tc39.es/proposal-change-array-by-copy/#sec-%typedarray%.prototype.toReversed
-exportTypedArrayMethod('toReversed', function toReversed() {
-  return arrayToReversed(aTypedArray(this), getTypedArrayConstructor(this));
-});
+// TODO: Remove from `core-js@4`
+__nccwpck_require__(2886);
 
 
 /***/ }),
@@ -27246,26 +28175,8 @@ exportTypedArrayMethod('toReversed', function toReversed() {
 /***/ 22986:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
-"use strict";
-
-var ArrayBufferViewCore = __nccwpck_require__(4016);
-var uncurryThis = __nccwpck_require__(68610);
-var aCallable = __nccwpck_require__(43466);
-var arrayFromConstructorAndList = __nccwpck_require__(19635);
-
-var aTypedArray = ArrayBufferViewCore.aTypedArray;
-var getTypedArrayConstructor = ArrayBufferViewCore.getTypedArrayConstructor;
-var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
-var sort = uncurryThis(ArrayBufferViewCore.TypedArrayPrototype.sort);
-
-// `%TypedArray%.prototype.toSorted` method
-// https://tc39.es/proposal-change-array-by-copy/#sec-%typedarray%.prototype.toSorted
-exportTypedArrayMethod('toSorted', function toSorted(compareFn) {
-  if (compareFn !== undefined) aCallable(compareFn);
-  var O = aTypedArray(this);
-  var A = arrayFromConstructorAndList(getTypedArrayConstructor(O), O);
-  return sort(A, compareFn);
-});
+// TODO: Remove from `core-js@4`
+__nccwpck_require__(78664);
 
 
 /***/ }),
@@ -27374,37 +28285,8 @@ exportTypedArrayMethod('uniqueBy', function uniqueBy(resolver) {
 /***/ 1830:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
-"use strict";
-
-var arrayWith = __nccwpck_require__(13188);
-var ArrayBufferViewCore = __nccwpck_require__(4016);
-var isBigIntArray = __nccwpck_require__(97713);
-var toIntegerOrInfinity = __nccwpck_require__(4391);
-var toBigInt = __nccwpck_require__(7523);
-
-var aTypedArray = ArrayBufferViewCore.aTypedArray;
-var getTypedArrayConstructor = ArrayBufferViewCore.getTypedArrayConstructor;
-var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
-
-var PROPER_ORDER = !!function () {
-  try {
-    // eslint-disable-next-line no-throw-literal, es/no-typed-arrays -- required for testing
-    new Int8Array(1)['with'](2, { valueOf: function () { throw 8; } });
-  } catch (error) {
-    // some early implementations, like WebKit, does not follow the final semantic
-    // https://github.com/tc39/proposal-change-array-by-copy/pull/86
-    return error === 8;
-  }
-}();
-
-// `%TypedArray%.prototype.with` method
-// https://tc39.es/proposal-change-array-by-copy/#sec-%typedarray%.prototype.with
-exportTypedArrayMethod('with', { 'with': function (index, value) {
-  var O = aTypedArray(this);
-  var relativeIndex = toIntegerOrInfinity(index);
-  var actualValue = isBigIntArray(O) ? toBigInt(value) : +value;
-  return arrayWith(O, getTypedArrayConstructor(O), relativeIndex, actualValue);
-} }['with'], !PROPER_ORDER);
+// TODO: Remove from `core-js@4`
+__nccwpck_require__(28734);
 
 
 /***/ }),
@@ -27613,7 +28495,7 @@ var ctoi = (__nccwpck_require__(7986).ctoi);
 
 var disallowed = /[^\d+/a-z]/i;
 var whitespaces = /[\t\n\f\r ]+/g;
-var finalEq = /[=]+$/;
+var finalEq = /[=]{1,2}$/;
 
 var $atob = getBuiltIn('atob');
 var fromCharCode = String.fromCharCode;
@@ -28219,10 +29101,7 @@ var getRegExpFlags = __nccwpck_require__(22509);
 var MapHelpers = __nccwpck_require__(71505);
 var SetHelpers = __nccwpck_require__(3001);
 var ERROR_STACK_INSTALLABLE = __nccwpck_require__(36538);
-var V8 = __nccwpck_require__(69947);
-var IS_BROWSER = __nccwpck_require__(21130);
-var IS_DENO = __nccwpck_require__(73289);
-var IS_NODE = __nccwpck_require__(72769);
+var PROPER_TRANSFER = __nccwpck_require__(13177);
 
 var Object = global.Object;
 var Array = global.Array;
@@ -28347,7 +29226,7 @@ var structuredCloneInternal = function (value, map) {
 
   var type = classof(value);
   var deep = false;
-  var C, name, cloned, dataTransfer, i, length, keys, key, source, target;
+  var C, name, cloned, dataTransfer, i, length, keys, key, source, target, options;
 
   switch (type) {
     case 'Array':
@@ -28502,11 +29381,12 @@ var structuredCloneInternal = function (value, map) {
           if (!C && typeof value.slice != 'function') throwUnpolyfillable(type);
           // detached buffers throws in `DataView` and `.slice`
           try {
-            if (typeof value.slice == 'function') {
+            if (typeof value.slice == 'function' && !value.resizable) {
               cloned = value.slice(0);
             } else {
               length = value.byteLength;
-              cloned = new ArrayBuffer(length);
+              options = 'maxByteLength' in value ? { maxByteLength: value.maxByteLength } : undefined;
+              cloned = new ArrayBuffer(length, options);
               source = new C(value);
               target = new C(cloned);
               for (i = 0; i < length; i++) {
@@ -28624,15 +29504,6 @@ var structuredCloneInternal = function (value, map) {
   return cloned;
 };
 
-var PROPER_TRANSFER = nativeStructuredClone && !fails(function () {
-  // prevent V8 ArrayBufferDetaching protector cell invalidation and performance degradation
-  // https://github.com/zloirock/core-js/issues/679
-  if ((IS_DENO && V8 > 92) || (IS_NODE && V8 > 94) || (IS_BROWSER && V8 > 97)) return false;
-  var buffer = new ArrayBuffer(8);
-  var clone = nativeStructuredClone(buffer, { transfer: [buffer] });
-  return buffer.byteLength != 0 || clone.byteLength != 8;
-});
-
 var tryToTransfer = function (rawTransfer, map) {
   if (!isObject(rawTransfer)) throw TypeError('Transfer option cannot be converted to a sequence');
 
@@ -28675,6 +29546,9 @@ var tryToTransfer = function (rawTransfer, map) {
         } catch (error) { /* empty */ }
         break;
       case 'ArrayBuffer':
+        if (!isCallable(value.transfer)) throwUnpolyfillable(type, TRANSFERRING);
+        transferred = value.transfer();
+        break;
       case 'MediaSourceHandle':
       case 'MessagePort':
       case 'OffscreenCanvas':
@@ -28733,6 +29607,7 @@ var uncurryThis = __nccwpck_require__(68610);
 var DESCRIPTORS = __nccwpck_require__(35144);
 var USE_NATIVE_URL = __nccwpck_require__(70862);
 var defineBuiltIn = __nccwpck_require__(56986);
+var defineBuiltInAccessor = __nccwpck_require__(42980);
 var defineBuiltIns = __nccwpck_require__(69413);
 var setToStringTag = __nccwpck_require__(70447);
 var createIteratorConstructor = __nccwpck_require__(18253);
@@ -28928,7 +29803,8 @@ URLSearchParamsState.prototype = {
 var URLSearchParamsConstructor = function URLSearchParams(/* init */) {
   anInstance(this, URLSearchParamsPrototype);
   var init = arguments.length > 0 ? arguments[0] : undefined;
-  setInternalState(this, new URLSearchParamsState(init));
+  var state = setInternalState(this, new URLSearchParamsState(init));
+  if (!DESCRIPTORS) this.length = state.entries.length;
 };
 
 var URLSearchParamsPrototype = URLSearchParamsConstructor.prototype;
@@ -28940,6 +29816,7 @@ defineBuiltIns(URLSearchParamsPrototype, {
     validateArgumentsLength(arguments.length, 2);
     var state = getInternalParamsState(this);
     push(state.entries, { key: $toString(name), value: $toString(value) });
+    if (!DESCRIPTORS) this.length++;
     state.updateURL();
   },
   // `URLSearchParams.prototype.delete` method
@@ -28954,6 +29831,7 @@ defineBuiltIns(URLSearchParamsPrototype, {
       if (entries[index].key === key) splice(entries, index, 1);
       else index++;
     }
+    if (!DESCRIPTORS) this.length = entries.length;
     state.updateURL();
   },
   // `URLSearchParams.prototype.get` method
@@ -29015,6 +29893,7 @@ defineBuiltIns(URLSearchParamsPrototype, {
       }
     }
     if (!found) push(entries, { key: key, value: val });
+    if (!DESCRIPTORS) this.length = entries.length;
     state.updateURL();
   },
   // `URLSearchParams.prototype.sort` method
@@ -29059,6 +29938,16 @@ defineBuiltIn(URLSearchParamsPrototype, ITERATOR, URLSearchParamsPrototype.entri
 defineBuiltIn(URLSearchParamsPrototype, 'toString', function toString() {
   return getInternalParamsState(this).serialize();
 }, { enumerable: true });
+
+// `URLSearchParams.prototype.size` getter
+// https://github.com/whatwg/url/pull/734
+if (DESCRIPTORS) defineBuiltInAccessor(URLSearchParamsPrototype, 'size', {
+  get: function size() {
+    return getInternalParamsState(this).entries.length;
+  },
+  configurable: true,
+  enumerable: true
+});
 
 setToStringTag(URLSearchParamsConstructor, URL_SEARCH_PARAMS);
 
@@ -29124,6 +30013,35 @@ module.exports = {
 
 // TODO: Remove this module from `core-js@4` since it's replaced to module below
 __nccwpck_require__(64064);
+
+
+/***/ }),
+
+/***/ 81999:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var DESCRIPTORS = __nccwpck_require__(35144);
+var uncurryThis = __nccwpck_require__(68610);
+var defineBuiltInAccessor = __nccwpck_require__(42980);
+
+var URLSearchParamsPrototype = URLSearchParams.prototype;
+var forEach = uncurryThis(URLSearchParamsPrototype.forEach);
+
+// `URLSearchParams.prototype.size` getter
+// https://github.com/whatwg/url/pull/734
+if (DESCRIPTORS && !('size' in URLSearchParamsPrototype)) {
+  defineBuiltInAccessor(URLSearchParamsPrototype, 'size', {
+    get: function size() {
+      var count = 0;
+      forEach(this, function () { count++; });
+      return count;
+    },
+    configurable: true,
+    enumerable: true
+  });
+}
 
 
 /***/ }),
@@ -29195,7 +30113,8 @@ var HEX = /^[\da-f]+$/i;
 /* eslint-disable regexp/no-control-character -- safe */
 var FORBIDDEN_HOST_CODE_POINT = /[\0\t\n\r #%/:<>?@[\\\]^|]/;
 var FORBIDDEN_HOST_CODE_POINT_EXCLUDING_PERCENT = /[\0\t\n\r #/:<>?@[\\\]^|]/;
-var LEADING_AND_TRAILING_C0_CONTROL_OR_SPACE = /^[\u0000-\u0020]+|[\u0000-\u0020]+$/g;
+var LEADING_C0_CONTROL_OR_SPACE = /^[\u0000-\u0020]+/;
+var TRAILING_C0_CONTROL_OR_SPACE = /(^|[^\u0000-\u0020])[\u0000-\u0020]+$/;
 var TAB_AND_NEW_LINE = /[\t\n\r]/g;
 /* eslint-enable regexp/no-control-character -- safe */
 var EOF;
@@ -29491,7 +30410,8 @@ URLState.prototype = {
       url.query = null;
       url.fragment = null;
       url.cannotBeABaseURL = false;
-      input = replace(input, LEADING_AND_TRAILING_C0_CONTROL_OR_SPACE, '');
+      input = replace(input, LEADING_C0_CONTROL_OR_SPACE, '');
+      input = replace(input, TRAILING_C0_CONTROL_OR_SPACE, '$1');
     }
 
     input = replace(input, TAB_AND_NEW_LINE, '');
@@ -36598,7 +37518,7 @@ function patch (fs) {
         var backoff = 0;
         fs$rename(from, to, function CB (er) {
           if (er
-              && (er.code === "EACCES" || er.code === "EPERM")
+              && (er.code === "EACCES" || er.code === "EPERM" || er.code === "EBUSY")
               && Date.now() - start < 60000) {
             setTimeout(function() {
               fs.stat(to, function (stater, st) {
@@ -51770,255 +52690,270 @@ function regExpEscape (s) {
 /***/ 95982:
 /***/ ((module) => {
 
+"use strict";
+
+
+function hasKey(obj, keys) {
+	var o = obj;
+	keys.slice(0, -1).forEach(function (key) {
+		o = o[key] || {};
+	});
+
+	var key = keys[keys.length - 1];
+	return key in o;
+}
+
+function isNumber(x) {
+	if (typeof x === 'number') { return true; }
+	if ((/^0x[0-9a-f]+$/i).test(x)) { return true; }
+	return (/^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(e[-+]?\d+)?$/).test(x);
+}
+
+function isConstructorOrProto(obj, key) {
+	return (key === 'constructor' && typeof obj[key] === 'function') || key === '__proto__';
+}
+
 module.exports = function (args, opts) {
-    if (!opts) opts = {};
-    
-    var flags = { bools : {}, strings : {}, unknownFn: null };
+	if (!opts) { opts = {}; }
 
-    if (typeof opts['unknown'] === 'function') {
-        flags.unknownFn = opts['unknown'];
-    }
+	var flags = {
+		bools: {},
+		strings: {},
+		unknownFn: null,
+	};
 
-    if (typeof opts['boolean'] === 'boolean' && opts['boolean']) {
-      flags.allBools = true;
-    } else {
-      [].concat(opts['boolean']).filter(Boolean).forEach(function (key) {
-          flags.bools[key] = true;
-      });
-    }
-    
-    var aliases = {};
-    Object.keys(opts.alias || {}).forEach(function (key) {
-        aliases[key] = [].concat(opts.alias[key]);
-        aliases[key].forEach(function (x) {
-            aliases[x] = [key].concat(aliases[key].filter(function (y) {
-                return x !== y;
-            }));
-        });
-    });
+	if (typeof opts.unknown === 'function') {
+		flags.unknownFn = opts.unknown;
+	}
 
-    [].concat(opts.string).filter(Boolean).forEach(function (key) {
-        flags.strings[key] = true;
-        if (aliases[key]) {
-            flags.strings[aliases[key]] = true;
-        }
-     });
+	if (typeof opts.boolean === 'boolean' && opts.boolean) {
+		flags.allBools = true;
+	} else {
+		[].concat(opts.boolean).filter(Boolean).forEach(function (key) {
+			flags.bools[key] = true;
+		});
+	}
 
-    var defaults = opts['default'] || {};
-    
-    var argv = { _ : [] };
-    Object.keys(flags.bools).forEach(function (key) {
-        setArg(key, defaults[key] === undefined ? false : defaults[key]);
-    });
-    
-    var notFlags = [];
+	var aliases = {};
 
-    if (args.indexOf('--') !== -1) {
-        notFlags = args.slice(args.indexOf('--')+1);
-        args = args.slice(0, args.indexOf('--'));
-    }
+	function aliasIsBoolean(key) {
+		return aliases[key].some(function (x) {
+			return flags.bools[x];
+		});
+	}
 
-    function argDefined(key, arg) {
-        return (flags.allBools && /^--[^=]+$/.test(arg)) ||
-            flags.strings[key] || flags.bools[key] || aliases[key];
-    }
+	Object.keys(opts.alias || {}).forEach(function (key) {
+		aliases[key] = [].concat(opts.alias[key]);
+		aliases[key].forEach(function (x) {
+			aliases[x] = [key].concat(aliases[key].filter(function (y) {
+				return x !== y;
+			}));
+		});
+	});
 
-    function setArg (key, val, arg) {
-        if (arg && flags.unknownFn && !argDefined(key, arg)) {
-            if (flags.unknownFn(arg) === false) return;
-        }
+	[].concat(opts.string).filter(Boolean).forEach(function (key) {
+		flags.strings[key] = true;
+		if (aliases[key]) {
+			[].concat(aliases[key]).forEach(function (k) {
+				flags.strings[k] = true;
+			});
+		}
+	});
 
-        var value = !flags.strings[key] && isNumber(val)
-            ? Number(val) : val
-        ;
-        setKey(argv, key.split('.'), value);
-        
-        (aliases[key] || []).forEach(function (x) {
-            setKey(argv, x.split('.'), value);
-        });
-    }
+	var defaults = opts.default || {};
 
-    function setKey (obj, keys, value) {
-        var o = obj;
-        for (var i = 0; i < keys.length-1; i++) {
-            var key = keys[i];
-            if (isConstructorOrProto(o, key)) return;
-            if (o[key] === undefined) o[key] = {};
-            if (o[key] === Object.prototype || o[key] === Number.prototype
-                || o[key] === String.prototype) o[key] = {};
-            if (o[key] === Array.prototype) o[key] = [];
-            o = o[key];
-        }
+	var argv = { _: [] };
 
-        var key = keys[keys.length - 1];
-        if (isConstructorOrProto(o, key)) return;
-        if (o === Object.prototype || o === Number.prototype
-            || o === String.prototype) o = {};
-        if (o === Array.prototype) o = [];
-        if (o[key] === undefined || flags.bools[key] || typeof o[key] === 'boolean') {
-            o[key] = value;
-        }
-        else if (Array.isArray(o[key])) {
-            o[key].push(value);
-        }
-        else {
-            o[key] = [ o[key], value ];
-        }
-    }
-    
-    function aliasIsBoolean(key) {
-      return aliases[key].some(function (x) {
-          return flags.bools[x];
-      });
-    }
+	function argDefined(key, arg) {
+		return (flags.allBools && (/^--[^=]+$/).test(arg))
+			|| flags.strings[key]
+			|| flags.bools[key]
+			|| aliases[key];
+	}
 
-    for (var i = 0; i < args.length; i++) {
-        var arg = args[i];
-        
-        if (/^--.+=/.test(arg)) {
-            // Using [\s\S] instead of . because js doesn't support the
-            // 'dotall' regex modifier. See:
-            // http://stackoverflow.com/a/1068308/13216
-            var m = arg.match(/^--([^=]+)=([\s\S]*)$/);
-            var key = m[1];
-            var value = m[2];
-            if (flags.bools[key]) {
-                value = value !== 'false';
-            }
-            setArg(key, value, arg);
-        }
-        else if (/^--no-.+/.test(arg)) {
-            var key = arg.match(/^--no-(.+)/)[1];
-            setArg(key, false, arg);
-        }
-        else if (/^--.+/.test(arg)) {
-            var key = arg.match(/^--(.+)/)[1];
-            var next = args[i + 1];
-            if (next !== undefined && !/^-/.test(next)
-            && !flags.bools[key]
-            && !flags.allBools
-            && (aliases[key] ? !aliasIsBoolean(key) : true)) {
-                setArg(key, next, arg);
-                i++;
-            }
-            else if (/^(true|false)$/.test(next)) {
-                setArg(key, next === 'true', arg);
-                i++;
-            }
-            else {
-                setArg(key, flags.strings[key] ? '' : true, arg);
-            }
-        }
-        else if (/^-[^-]+/.test(arg)) {
-            var letters = arg.slice(1,-1).split('');
-            
-            var broken = false;
-            for (var j = 0; j < letters.length; j++) {
-                var next = arg.slice(j+2);
-                
-                if (next === '-') {
-                    setArg(letters[j], next, arg)
-                    continue;
-                }
-                
-                if (/[A-Za-z]/.test(letters[j]) && /=/.test(next)) {
-                    setArg(letters[j], next.split('=')[1], arg);
-                    broken = true;
-                    break;
-                }
-                
-                if (/[A-Za-z]/.test(letters[j])
-                && /-?\d+(\.\d*)?(e-?\d+)?$/.test(next)) {
-                    setArg(letters[j], next, arg);
-                    broken = true;
-                    break;
-                }
-                
-                if (letters[j+1] && letters[j+1].match(/\W/)) {
-                    setArg(letters[j], arg.slice(j+2), arg);
-                    broken = true;
-                    break;
-                }
-                else {
-                    setArg(letters[j], flags.strings[letters[j]] ? '' : true, arg);
-                }
-            }
-            
-            var key = arg.slice(-1)[0];
-            if (!broken && key !== '-') {
-                if (args[i+1] && !/^(-|--)[^-]/.test(args[i+1])
-                && !flags.bools[key]
-                && (aliases[key] ? !aliasIsBoolean(key) : true)) {
-                    setArg(key, args[i+1], arg);
-                    i++;
-                }
-                else if (args[i+1] && /^(true|false)$/.test(args[i+1])) {
-                    setArg(key, args[i+1] === 'true', arg);
-                    i++;
-                }
-                else {
-                    setArg(key, flags.strings[key] ? '' : true, arg);
-                }
-            }
-        }
-        else {
-            if (!flags.unknownFn || flags.unknownFn(arg) !== false) {
-                argv._.push(
-                    flags.strings['_'] || !isNumber(arg) ? arg : Number(arg)
-                );
-            }
-            if (opts.stopEarly) {
-                argv._.push.apply(argv._, args.slice(i + 1));
-                break;
-            }
-        }
-    }
-    
-    Object.keys(defaults).forEach(function (key) {
-        if (!hasKey(argv, key.split('.'))) {
-            setKey(argv, key.split('.'), defaults[key]);
-            
-            (aliases[key] || []).forEach(function (x) {
-                setKey(argv, x.split('.'), defaults[key]);
-            });
-        }
-    });
-    
-    if (opts['--']) {
-        argv['--'] = new Array();
-        notFlags.forEach(function(key) {
-            argv['--'].push(key);
-        });
-    }
-    else {
-        notFlags.forEach(function(key) {
-            argv._.push(key);
-        });
-    }
+	function setKey(obj, keys, value) {
+		var o = obj;
+		for (var i = 0; i < keys.length - 1; i++) {
+			var key = keys[i];
+			if (isConstructorOrProto(o, key)) { return; }
+			if (o[key] === undefined) { o[key] = {}; }
+			if (
+				o[key] === Object.prototype
+				|| o[key] === Number.prototype
+				|| o[key] === String.prototype
+			) {
+				o[key] = {};
+			}
+			if (o[key] === Array.prototype) { o[key] = []; }
+			o = o[key];
+		}
 
-    return argv;
+		var lastKey = keys[keys.length - 1];
+		if (isConstructorOrProto(o, lastKey)) { return; }
+		if (
+			o === Object.prototype
+			|| o === Number.prototype
+			|| o === String.prototype
+		) {
+			o = {};
+		}
+		if (o === Array.prototype) { o = []; }
+		if (o[lastKey] === undefined || flags.bools[lastKey] || typeof o[lastKey] === 'boolean') {
+			o[lastKey] = value;
+		} else if (Array.isArray(o[lastKey])) {
+			o[lastKey].push(value);
+		} else {
+			o[lastKey] = [o[lastKey], value];
+		}
+	}
+
+	function setArg(key, val, arg) {
+		if (arg && flags.unknownFn && !argDefined(key, arg)) {
+			if (flags.unknownFn(arg) === false) { return; }
+		}
+
+		var value = !flags.strings[key] && isNumber(val)
+			? Number(val)
+			: val;
+		setKey(argv, key.split('.'), value);
+
+		(aliases[key] || []).forEach(function (x) {
+			setKey(argv, x.split('.'), value);
+		});
+	}
+
+	Object.keys(flags.bools).forEach(function (key) {
+		setArg(key, defaults[key] === undefined ? false : defaults[key]);
+	});
+
+	var notFlags = [];
+
+	if (args.indexOf('--') !== -1) {
+		notFlags = args.slice(args.indexOf('--') + 1);
+		args = args.slice(0, args.indexOf('--'));
+	}
+
+	for (var i = 0; i < args.length; i++) {
+		var arg = args[i];
+		var key;
+		var next;
+
+		if ((/^--.+=/).test(arg)) {
+			// Using [\s\S] instead of . because js doesn't support the
+			// 'dotall' regex modifier. See:
+			// http://stackoverflow.com/a/1068308/13216
+			var m = arg.match(/^--([^=]+)=([\s\S]*)$/);
+			key = m[1];
+			var value = m[2];
+			if (flags.bools[key]) {
+				value = value !== 'false';
+			}
+			setArg(key, value, arg);
+		} else if ((/^--no-.+/).test(arg)) {
+			key = arg.match(/^--no-(.+)/)[1];
+			setArg(key, false, arg);
+		} else if ((/^--.+/).test(arg)) {
+			key = arg.match(/^--(.+)/)[1];
+			next = args[i + 1];
+			if (
+				next !== undefined
+				&& !(/^(-|--)[^-]/).test(next)
+				&& !flags.bools[key]
+				&& !flags.allBools
+				&& (aliases[key] ? !aliasIsBoolean(key) : true)
+			) {
+				setArg(key, next, arg);
+				i += 1;
+			} else if ((/^(true|false)$/).test(next)) {
+				setArg(key, next === 'true', arg);
+				i += 1;
+			} else {
+				setArg(key, flags.strings[key] ? '' : true, arg);
+			}
+		} else if ((/^-[^-]+/).test(arg)) {
+			var letters = arg.slice(1, -1).split('');
+
+			var broken = false;
+			for (var j = 0; j < letters.length; j++) {
+				next = arg.slice(j + 2);
+
+				if (next === '-') {
+					setArg(letters[j], next, arg);
+					continue;
+				}
+
+				if ((/[A-Za-z]/).test(letters[j]) && next[0] === '=') {
+					setArg(letters[j], next.slice(1), arg);
+					broken = true;
+					break;
+				}
+
+				if (
+					(/[A-Za-z]/).test(letters[j])
+					&& (/-?\d+(\.\d*)?(e-?\d+)?$/).test(next)
+				) {
+					setArg(letters[j], next, arg);
+					broken = true;
+					break;
+				}
+
+				if (letters[j + 1] && letters[j + 1].match(/\W/)) {
+					setArg(letters[j], arg.slice(j + 2), arg);
+					broken = true;
+					break;
+				} else {
+					setArg(letters[j], flags.strings[letters[j]] ? '' : true, arg);
+				}
+			}
+
+			key = arg.slice(-1)[0];
+			if (!broken && key !== '-') {
+				if (
+					args[i + 1]
+					&& !(/^(-|--)[^-]/).test(args[i + 1])
+					&& !flags.bools[key]
+					&& (aliases[key] ? !aliasIsBoolean(key) : true)
+				) {
+					setArg(key, args[i + 1], arg);
+					i += 1;
+				} else if (args[i + 1] && (/^(true|false)$/).test(args[i + 1])) {
+					setArg(key, args[i + 1] === 'true', arg);
+					i += 1;
+				} else {
+					setArg(key, flags.strings[key] ? '' : true, arg);
+				}
+			}
+		} else {
+			if (!flags.unknownFn || flags.unknownFn(arg) !== false) {
+				argv._.push(flags.strings._ || !isNumber(arg) ? arg : Number(arg));
+			}
+			if (opts.stopEarly) {
+				argv._.push.apply(argv._, args.slice(i + 1));
+				break;
+			}
+		}
+	}
+
+	Object.keys(defaults).forEach(function (k) {
+		if (!hasKey(argv, k.split('.'))) {
+			setKey(argv, k.split('.'), defaults[k]);
+
+			(aliases[k] || []).forEach(function (x) {
+				setKey(argv, x.split('.'), defaults[k]);
+			});
+		}
+	});
+
+	if (opts['--']) {
+		argv['--'] = notFlags.slice();
+	} else {
+		notFlags.forEach(function (k) {
+			argv._.push(k);
+		});
+	}
+
+	return argv;
 };
-
-function hasKey (obj, keys) {
-    var o = obj;
-    keys.slice(0,-1).forEach(function (key) {
-        o = (o[key] || {});
-    });
-
-    var key = keys[keys.length - 1];
-    return key in o;
-}
-
-function isNumber (x) {
-    if (typeof x === 'number') return true;
-    if (/^0x[0-9a-f]+$/i.test(x)) return true;
-    return /^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(e[-+]?\d+)?$/.test(x);
-}
-
-
-function isConstructorOrProto (obj, key) {
-    return key === 'constructor' && typeof obj[key] === 'function' || key === '__proto__';
-}
 
 
 /***/ }),
@@ -61787,7 +62722,7 @@ var Stream = __nccwpck_require__(55590);
 /*<replacement>*/
 
 var Buffer = (__nccwpck_require__(33051).Buffer);
-var OurUint8Array = global.Uint8Array || function () {};
+var OurUint8Array = (typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}).Uint8Array || function () {};
 function _uint8ArrayToBuffer(chunk) {
   return Buffer.from(chunk);
 }
@@ -62357,8 +63292,8 @@ Readable.prototype.pipe = function (dest, pipeOpts) {
       // also returned false.
       // => Check whether `dest` is still a piping destination.
       if ((state.pipesCount === 1 && state.pipes === dest || state.pipesCount > 1 && indexOf(state.pipes, dest) !== -1) && !cleanedUp) {
-        debug('false write response, pause', src._readableState.awaitDrain);
-        src._readableState.awaitDrain++;
+        debug('false write response, pause', state.awaitDrain);
+        state.awaitDrain++;
         increasedAwaitDrain = true;
       }
       src.pause();
@@ -62452,7 +63387,7 @@ Readable.prototype.unpipe = function (dest) {
     state.flowing = false;
 
     for (var i = 0; i < len; i++) {
-      dests[i].emit('unpipe', this, unpipeInfo);
+      dests[i].emit('unpipe', this, { hasUnpiped: false });
     }return this;
   }
 
@@ -63062,7 +63997,7 @@ var Stream = __nccwpck_require__(55590);
 /*<replacement>*/
 
 var Buffer = (__nccwpck_require__(33051).Buffer);
-var OurUint8Array = global.Uint8Array || function () {};
+var OurUint8Array = (typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}).Uint8Array || function () {};
 function _uint8ArrayToBuffer(chunk) {
   return Buffer.from(chunk);
 }
@@ -63330,7 +64265,7 @@ Writable.prototype.uncork = function () {
   if (state.corked) {
     state.corked--;
 
-    if (!state.writing && !state.corked && !state.finished && !state.bufferProcessing && state.bufferedRequest) clearBuffer(this, state);
+    if (!state.writing && !state.corked && !state.bufferProcessing && state.bufferedRequest) clearBuffer(this, state);
   }
 };
 
@@ -63572,7 +64507,7 @@ Writable.prototype.end = function (chunk, encoding, cb) {
   }
 
   // ignore unnecessary end() calls.
-  if (!state.ending && !state.finished) endWritable(this, state, cb);
+  if (!state.ending) endWritable(this, state, cb);
 };
 
 function needFinish(state) {
@@ -63633,11 +64568,9 @@ function onCorkedFinish(corkReq, state, err) {
     cb(err);
     entry = entry.next;
   }
-  if (state.corkedRequestsFree) {
-    state.corkedRequestsFree.next = corkReq;
-  } else {
-    state.corkedRequestsFree = corkReq;
-  }
+
+  // reuse the free corkReq.
+  state.corkedRequestsFree.next = corkReq;
 }
 
 Object.defineProperty(Writable.prototype, 'destroyed', {
@@ -63731,7 +64664,6 @@ module.exports = function () {
 
   BufferList.prototype.concat = function concat(n) {
     if (this.length === 0) return Buffer.alloc(0);
-    if (this.length === 1) return this.head.data;
     var ret = Buffer.allocUnsafe(n >>> 0);
     var p = this.head;
     var i = 0;
@@ -63776,9 +64708,15 @@ function destroy(err, cb) {
   if (readableDestroyed || writableDestroyed) {
     if (cb) {
       cb(err);
-    } else if (err && (!this._writableState || !this._writableState.errorEmitted)) {
-      pna.nextTick(emitErrorNT, this, err);
+    } else if (err) {
+      if (!this._writableState) {
+        pna.nextTick(emitErrorNT, this, err);
+      } else if (!this._writableState.errorEmitted) {
+        this._writableState.errorEmitted = true;
+        pna.nextTick(emitErrorNT, this, err);
+      }
     }
+
     return this;
   }
 
@@ -63796,9 +64734,11 @@ function destroy(err, cb) {
 
   this._destroy(err || null, function (err) {
     if (!cb && err) {
-      pna.nextTick(emitErrorNT, _this, err);
-      if (_this._writableState) {
+      if (!_this._writableState) {
+        pna.nextTick(emitErrorNT, _this, err);
+      } else if (!_this._writableState.errorEmitted) {
         _this._writableState.errorEmitted = true;
+        pna.nextTick(emitErrorNT, _this, err);
       }
     } else if (cb) {
       cb(err);
@@ -63820,6 +64760,8 @@ function undestroy() {
     this._writableState.destroyed = false;
     this._writableState.ended = false;
     this._writableState.ending = false;
+    this._writableState.finalCalled = false;
+    this._writableState.prefinished = false;
     this._writableState.finished = false;
     this._writableState.errorEmitted = false;
   }
@@ -67197,7 +68139,7 @@ module.exports = JSON.parse('{"name":"axios","version":"0.21.4","description":"P
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler API client.","version":"6.4.9","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <code@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"licenses":[{"type":"MIT","url":"https://github.com/jscrambler/javascript-jscrambler/blob/master/LICENSE-MIT"}],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"grunt watch","prepublish":"npm run build"},"engines":{"node":">= 6.10.0"},"dependencies":{"@jscrambler/https-proxy-agent":"^5.0.1","axios":"^0.21.1","commander":"^2.8.1","core-js":"^3.16.4","filesize-parser":"1.5.0","fs-extra":"^10.1.0","glob":"^7.0.3","http-proxy-agent":"^4.0.1","jszip":"^3.7.1","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","q":"^1.4.1","rc":"^1.1.0","regenerator-runtime":"^0.13.9","snake-case":"^2.1.0","temp":"^0.8.3"},"devDependencies":{"@babel/cli":"^7.14.8","@babel/core":"^7.15.0","@babel/plugin-proposal-object-rest-spread":"^7.14.7","@babel/preset-env":"^7.15.0","grunt":"^1.0.2","grunt-cli":"^1.2.0","grunt-contrib-clean":"^1.0.0","grunt-contrib-copy":"^1.0.0","grunt-contrib-watch":"^1.0.0"},"files":["dist","LICENSE-MIT"],"main":"dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"}}');
+module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler API client.","version":"6.4.10","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <code@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"licenses":[{"type":"MIT","url":"https://github.com/jscrambler/javascript-jscrambler/blob/master/LICENSE-MIT"}],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"grunt watch","prepublish":"npm run build"},"engines":{"node":">= 6.10.0"},"dependencies":{"@jscrambler/https-proxy-agent":"^5.0.1","axios":"^0.21.1","commander":"^2.8.1","core-js":"^3.16.4","filesize-parser":"1.5.0","fs-extra":"^10.1.0","glob":"^7.0.3","http-proxy-agent":"^4.0.1","jszip":"^3.7.1","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","q":"^1.4.1","rc":"^1.1.0","regenerator-runtime":"^0.13.9","snake-case":"^2.1.0","temp":"^0.8.3"},"devDependencies":{"@babel/cli":"^7.14.8","@babel/core":"^7.15.0","@babel/plugin-proposal-object-rest-spread":"^7.14.7","@babel/preset-env":"^7.15.0","grunt":"^1.0.2","grunt-cli":"^1.2.0","grunt-contrib-clean":"^1.0.0","grunt-contrib-copy":"^1.0.0","grunt-contrib-watch":"^1.0.0"},"files":["dist","LICENSE-MIT"],"main":"dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"}}');
 
 /***/ })
 

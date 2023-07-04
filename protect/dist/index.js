@@ -5116,6 +5116,7 @@ __nccwpck_require__(36752);
 __nccwpck_require__(74353);
 __nccwpck_require__(18151);
 __nccwpck_require__(97989);
+__nccwpck_require__(67153);
 __nccwpck_require__(66197);
 __nccwpck_require__(97497);
 __nccwpck_require__(11318);
@@ -5129,6 +5130,7 @@ __nccwpck_require__(97665);
 __nccwpck_require__(29843);
 __nccwpck_require__(51292);
 __nccwpck_require__(6374);
+__nccwpck_require__(69439);
 __nccwpck_require__(97922);
 __nccwpck_require__(54059);
 __nccwpck_require__(52690);
@@ -5235,6 +5237,7 @@ __nccwpck_require__(45104);
 __nccwpck_require__(14649);
 __nccwpck_require__(39789);
 __nccwpck_require__(12571);
+__nccwpck_require__(29797);
 __nccwpck_require__(4246);
 __nccwpck_require__(18467);
 __nccwpck_require__(40778);
@@ -5297,10 +5300,12 @@ __nccwpck_require__(66031);
 __nccwpck_require__(96068);
 __nccwpck_require__(94253);
 __nccwpck_require__(47452);
+__nccwpck_require__(37551);
 __nccwpck_require__(11874);
 __nccwpck_require__(42454);
 __nccwpck_require__(18832);
 __nccwpck_require__(28973);
+__nccwpck_require__(3169);
 __nccwpck_require__(14874);
 __nccwpck_require__(42135);
 __nccwpck_require__(47382);
@@ -5339,13 +5344,13 @@ __nccwpck_require__(68058);
 __nccwpck_require__(43409);
 __nccwpck_require__(50825);
 __nccwpck_require__(58019);
-__nccwpck_require__(26171);
 __nccwpck_require__(17862);
 __nccwpck_require__(32707);
-__nccwpck_require__(85514);
 __nccwpck_require__(39616);
 __nccwpck_require__(68405);
+__nccwpck_require__(32402);
 __nccwpck_require__(38068);
+__nccwpck_require__(34822);
 __nccwpck_require__(38661);
 __nccwpck_require__(22694);
 __nccwpck_require__(63732);
@@ -5387,9 +5392,14 @@ __nccwpck_require__(54468);
 __nccwpck_require__(96066);
 __nccwpck_require__(13929);
 __nccwpck_require__(26560);
+__nccwpck_require__(17513);
 __nccwpck_require__(48147);
 __nccwpck_require__(39819);
+__nccwpck_require__(57054);
+__nccwpck_require__(87001);
 __nccwpck_require__(81999);
+__nccwpck_require__(26171);
+__nccwpck_require__(85514);
 
 module.exports = __nccwpck_require__(43516);
 
@@ -5543,11 +5553,9 @@ module.exports = function (disposable, V, hint, method) {
   var resource;
   if (!method) {
     if (isNullOrUndefined(V)) return;
-    resource = createDisposableResource(V, hint);
-  } else if (isNullOrUndefined(V)) {
-    resource = createDisposableResource(undefined, hint, method);
+    resource = createDisposableResource(anObject(V), hint);
   } else {
-    resource = createDisposableResource(anObject(V), hint, method);
+    resource = createDisposableResource(undefined, hint, method);
   }
 
   push(disposable.stack, resource);
@@ -5723,16 +5731,18 @@ var setInt8 = uncurryThis(DataViewPrototype.setInt8);
 
 module.exports = PROPER_TRANSFER && function (arrayBuffer, newLength, preserveResizability) {
   var byteLength = arrayBufferByteLength(arrayBuffer);
-  var newByteLength = newLength === undefined ? byteLength : min(toIndex(newLength), byteLength);
+  var newByteLength = newLength === undefined ? byteLength : toIndex(newLength);
   var fixedLength = !isResizable || !isResizable(arrayBuffer);
   if (isDetached(arrayBuffer)) throw TypeError('ArrayBuffer is detached');
   var newBuffer = structuredClone(arrayBuffer, { transfer: [arrayBuffer] });
   if (byteLength == newByteLength && (preserveResizability || fixedLength)) return newBuffer;
-  if (!preserveResizability || fixedLength) return slice(newBuffer, 0, newByteLength);
-  var newNewBuffer = new ArrayBuffer(newByteLength, maxByteLength && { maxByteLength: maxByteLength(newBuffer) });
+  if (byteLength >= newByteLength && (!preserveResizability || fixedLength)) return slice(newBuffer, 0, newByteLength);
+  var options = (preserveResizability && !fixedLength) && maxByteLength ? { maxByteLength: maxByteLength(newBuffer) } : undefined;
+  var newNewBuffer = new ArrayBuffer(newByteLength, options);
   var a = new DataView(newBuffer);
   var b = new DataView(newNewBuffer);
-  for (var i = 0; i < newByteLength; i++) setInt8(b, i, getInt8(a, i));
+  var copyLength = min(newByteLength, byteLength);
+  for (var i = 0; i < copyLength; i++) setInt8(b, i, getInt8(a, i));
   return newNewBuffer;
 };
 
@@ -6486,7 +6496,7 @@ module.exports = function ($this, callbackfn, that, specificConstructor) {
   for (;length > index; index++) {
     value = self[index];
     key = toPropertyKey(boundFunction(value, index, O));
-    // in some IE10 builds, `hasOwnProperty` returns incorrect result on integer keys
+    // in some IE versions, `hasOwnProperty` returns incorrect result on integer keys
     // but since it's a `null` prototype object, we can safely use `in`
     if (key in target) push(target[key], value);
     else target[key] = [value];
@@ -7276,13 +7286,14 @@ var createMethod = function (TYPE) {
   var IS_EVERY = TYPE == 2;
   var IS_SOME = TYPE == 3;
   return function (object, fn, target) {
+    anObject(object);
+    var MAPPING = fn !== undefined;
+    if (MAPPING || !IS_TO_ARRAY) aCallable(fn);
     var record = getIteratorDirect(object);
     var Promise = getBuiltIn('Promise');
     var iterator = record.iterator;
     var next = record.next;
     var counter = 0;
-    var MAPPING = fn !== undefined;
-    if (MAPPING || !IS_TO_ARRAY) aCallable(fn);
 
     return new Promise(function (resolve, reject) {
       var ifAbruptCloseAsyncIterator = function (error) {
@@ -7406,8 +7417,10 @@ var AsyncIteratorProxy = createAsyncIteratorProxy(function (Promise) {
 // `AsyncIterator.prototype.map` method
 // https://github.com/tc39/proposal-iterator-helpers
 module.exports = function map(mapper) {
+  anObject(this);
+  aCallable(mapper);
   return new AsyncIteratorProxy(getIteratorDirect(this), {
-    mapper: aCallable(mapper)
+    mapper: mapper
   });
 };
 
@@ -9349,7 +9362,7 @@ module.exports = function from(obj) {
     method = getIteratorMethod(object);
     alreadyAsync = false;
   }
-  if (isCallable(method)) {
+  if (method !== undefined) {
     iterator = call(method, object);
   } else {
     iterator = object;
@@ -9401,15 +9414,15 @@ module.exports = function (namespace, method) {
 /***/ }),
 
 /***/ 94737:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ ((module) => {
 
-var aCallable = __nccwpck_require__(43466);
-var anObject = __nccwpck_require__(19232);
-
+// `GetIteratorDirect(obj)` abstract operation
+// https://tc39.es/proposal-iterator-helpers/#sec-getiteratordirect
 module.exports = function (obj) {
   return {
     iterator: obj,
-    next: aCallable(anObject(obj).next)
+    next: obj.next,
+    done: false
   };
 };
 
@@ -9420,7 +9433,6 @@ module.exports = function (obj) {
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var call = __nccwpck_require__(7065);
-var isCallable = __nccwpck_require__(63774);
 var anObject = __nccwpck_require__(19232);
 var getIteratorDirect = __nccwpck_require__(94737);
 var getIteratorMethod = __nccwpck_require__(82305);
@@ -9428,7 +9440,7 @@ var getIteratorMethod = __nccwpck_require__(82305);
 module.exports = function (obj) {
   var object = anObject(obj);
   var method = getIteratorMethod(object);
-  return getIteratorDirect(anObject(isCallable(method) ? call(method, object) : object));
+  return getIteratorDirect(anObject(method !== undefined ? call(method, object) : object));
 };
 
 
@@ -9625,7 +9637,7 @@ module.exports = function (matched, str, position, captures, namedCaptures, repl
 /***/ }),
 
 /***/ 31157:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var check = function (it) {
   return it && it.Math == Math && it;
@@ -9640,7 +9652,7 @@ module.exports =
   check(typeof self == 'object' && self) ||
   check(typeof global == 'object' && global) ||
   // eslint-disable-next-line no-new-func -- fallback
-  (function () { return this; })() || Function('return this')();
+  (function () { return this; })() || this || Function('return this')();
 
 
 /***/ }),
@@ -10753,8 +10765,10 @@ var IteratorProxy = createIteratorProxy(function () {
 // `Iterator.prototype.map` method
 // https://github.com/tc39/proposal-iterator-helpers
 module.exports = function map(mapper) {
+  anObject(this);
+  aCallable(mapper);
   return new IteratorProxy(getIteratorDirect(this), {
-    mapper: aCallable(mapper)
+    mapper: mapper
   });
 };
 
@@ -12036,7 +12050,9 @@ module.exports = Object.setPrototypeOf || ('__proto__' in {} ? function () {
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var DESCRIPTORS = __nccwpck_require__(35144);
+var fails = __nccwpck_require__(64222);
 var uncurryThis = __nccwpck_require__(68610);
+var objectGetPrototypeOf = __nccwpck_require__(13128);
 var objectKeys = __nccwpck_require__(93567);
 var toIndexedObject = __nccwpck_require__(6706);
 var $propertyIsEnumerable = (__nccwpck_require__(68007).f);
@@ -12044,18 +12060,28 @@ var $propertyIsEnumerable = (__nccwpck_require__(68007).f);
 var propertyIsEnumerable = uncurryThis($propertyIsEnumerable);
 var push = uncurryThis([].push);
 
+// in some IE versions, `propertyIsEnumerable` returns incorrect result on integer keys
+// of `null` prototype objects
+var IE_BUG = DESCRIPTORS && fails(function () {
+  // eslint-disable-next-line es/no-object-create -- safe
+  var O = Object.create(null);
+  O[2] = 2;
+  return !propertyIsEnumerable(O, 2);
+});
+
 // `Object.{ entries, values }` methods implementation
 var createMethod = function (TO_ENTRIES) {
   return function (it) {
     var O = toIndexedObject(it);
     var keys = objectKeys(O);
+    var IE_WORKAROUND = IE_BUG && objectGetPrototypeOf(O) === null;
     var length = keys.length;
     var i = 0;
     var result = [];
     var key;
     while (length > i) {
       key = keys[i++];
-      if (!DESCRIPTORS || propertyIsEnumerable(O, key)) {
+      if (!DESCRIPTORS || (IE_WORKAROUND ? key in O : propertyIsEnumerable(O, key))) {
         push(result, TO_ENTRIES ? [key, O[key]] : O[key]);
       }
     }
@@ -12873,9 +12899,7 @@ module.exports = {
   add: uncurryThis(SetPrototype.add),
   has: uncurryThis(SetPrototype.has),
   remove: uncurryThis(SetPrototype['delete']),
-  proto: SetPrototype,
-  $has: SetPrototype.has,
-  $keys: SetPrototype.keys
+  proto: SetPrototype
 };
 
 
@@ -12896,12 +12920,6 @@ var iterateSimple = __nccwpck_require__(81575);
 var Set = SetHelpers.Set;
 var add = SetHelpers.add;
 var has = SetHelpers.has;
-var nativeHas = SetHelpers.$has;
-var nativeKeys = SetHelpers.$keys;
-
-var isNativeSetRecord = function (record) {
-  return record.has === nativeHas && record.keys === nativeKeys;
-};
 
 // `Set.prototype.intersection` method
 // https://github.com/tc39/proposal-set-methods
@@ -12910,18 +12928,9 @@ module.exports = function intersection(other) {
   var otherRec = getSetRecord(other);
   var result = new Set();
 
-  // observable side effects
-  if (!isNativeSetRecord(otherRec) && size(O) > otherRec.size) {
+  if (size(O) > otherRec.size) {
     iterateSimple(otherRec.getIterator(), function (e) {
       if (has(O, e)) add(result, e);
-    });
-
-    if (size(result) < 2) return result;
-
-    var disordered = result;
-    result = new Set();
-    iterateSet(O, function (e) {
-      if (has(disordered, e)) add(result, e);
     });
   } else {
     iterateSet(O, function (e) {
@@ -13223,10 +13232,10 @@ var store = __nccwpck_require__(96091);
 (module.exports = function (key, value) {
   return store[key] || (store[key] = value !== undefined ? value : {});
 })('versions', []).push({
-  version: '3.29.1',
+  version: '3.31.0',
   mode: IS_PURE ? 'pure' : 'global',
   copyright: '© 2014-2023 Denis Pushkarev (zloirock.ru)',
-  license: 'https://github.com/zloirock/core-js/blob/v3.29.1/LICENSE',
+  license: 'https://github.com/zloirock/core-js/blob/v3.31.0/LICENSE',
   source: 'https://github.com/zloirock/core-js'
 });
 
@@ -13864,13 +13873,18 @@ module.exports = !!structuredClone && !fails(function () {
 /* eslint-disable es/no-symbol -- required for testing */
 var V8_VERSION = __nccwpck_require__(69947);
 var fails = __nccwpck_require__(64222);
+var global = __nccwpck_require__(31157);
+
+var $String = global.String;
 
 // eslint-disable-next-line es/no-object-getownpropertysymbols -- required for testing
 module.exports = !!Object.getOwnPropertySymbols && !fails(function () {
   var symbol = Symbol();
   // Chrome 38 Symbol has incorrect toString conversion
   // `get-own-property-symbols` polyfill symbols converted to object are not Symbol instances
-  return !String(symbol) || !(Object(symbol) instanceof Symbol) ||
+  // nb: Do not call `String` directly to avoid this being optimized out to `symbol+''` which will,
+  // of course, fail.
+  return !$String(symbol) || !(Object(symbol) instanceof Symbol) ||
     // Chrome 38-40 symbols are not inherited from DOM collections prototypes to instances
     !Symbol.sham && V8_VERSION && V8_VERSION < 41;
 });
@@ -13900,6 +13914,69 @@ module.exports = function () {
       return call(valueOf, this);
     }, { arity: 1 });
   }
+};
+
+
+/***/ }),
+
+/***/ 61926:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var getBuiltIn = __nccwpck_require__(86632);
+var uncurryThis = __nccwpck_require__(68610);
+
+var Symbol = getBuiltIn('Symbol');
+var keyFor = Symbol.keyFor;
+var thisSymbolValue = uncurryThis(Symbol.prototype.valueOf);
+
+// `Symbol.isRegisteredSymbol` method
+// https://tc39.es/proposal-symbol-predicates/#sec-symbol-isregisteredsymbol
+module.exports = Symbol.isRegisteredSymbol || function isRegisteredSymbol(value) {
+  try {
+    return keyFor(thisSymbolValue(value)) !== undefined;
+  } catch (error) {
+    return false;
+  }
+};
+
+
+/***/ }),
+
+/***/ 83222:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var shared = __nccwpck_require__(13023);
+var getBuiltIn = __nccwpck_require__(86632);
+var uncurryThis = __nccwpck_require__(68610);
+var isSymbol = __nccwpck_require__(9370);
+var wellKnownSymbol = __nccwpck_require__(48322);
+
+var Symbol = getBuiltIn('Symbol');
+var $isWellKnownSymbol = Symbol.isWellKnownSymbol;
+var getOwnPropertyNames = getBuiltIn('Object', 'getOwnPropertyNames');
+var thisSymbolValue = uncurryThis(Symbol.prototype.valueOf);
+var WellKnownSymbolsStore = shared('wks');
+
+for (var i = 0, symbolKeys = getOwnPropertyNames(Symbol), symbolKeysLength = symbolKeys.length; i < symbolKeysLength; i++) {
+  // some old engines throws on access to some keys like `arguments` or `caller`
+  try {
+    var symbolKey = symbolKeys[i];
+    if (isSymbol(Symbol[symbolKey])) wellKnownSymbol(symbolKey);
+  } catch (error) { /* empty */ }
+}
+
+// `Symbol.isWellKnownSymbol` method
+// https://tc39.es/proposal-symbol-predicates/#sec-symbol-iswellknownsymbol
+// We should patch it for newly added well-known symbols. If it's not required, this module just will not be injected
+module.exports = function isWellKnownSymbol(value) {
+  if ($isWellKnownSymbol && $isWellKnownSymbol(value)) return true;
+  try {
+    var symbol = thisSymbolValue(value);
+    for (var j = 0, keys = getOwnPropertyNames(WellKnownSymbolsStore), keysLength = keys.length; j < keysLength; j++) {
+      if (WellKnownSymbolsStore[keys[j]] == symbol) return true;
+    }
+  } catch (error) { /* empty */ }
+  return false;
 };
 
 
@@ -14731,13 +14808,15 @@ module.exports = !fails(function () {
   // eslint-disable-next-line unicorn/relative-url-style -- required for testing
   var url = new URL('b?a=1&b=2&c=3', 'http://a');
   var searchParams = url.searchParams;
+  var searchParams2 = new URLSearchParams('a=1&a=2');
   var result = '';
   url.pathname = 'c%20d';
   searchParams.forEach(function (value, key) {
     searchParams['delete']('b');
     result += key + value;
   });
-  return (IS_PURE && !url.toJSON)
+  searchParams2['delete']('a', 2);
+  return (IS_PURE && (!url.toJSON || !searchParams2.has('a', 1) || searchParams2.has('a', 2)))
     || (!searchParams.size && (IS_PURE || !DESCRIPTORS))
     || !searchParams.sort
     || url.href !== 'http://a/c%20d?a=1&c=3'
@@ -15370,6 +15449,7 @@ var FIND_INDEX = 'findIndex';
 var SKIPS_HOLES = true;
 
 // Shouldn't skip holes
+// eslint-disable-next-line es/no-array-prototype-findindex -- testing
 if (FIND_INDEX in []) Array(1)[FIND_INDEX](function () { SKIPS_HOLES = false; });
 
 // `Array.prototype.findIndex` method
@@ -15443,6 +15523,7 @@ var FIND = 'find';
 var SKIPS_HOLES = true;
 
 // Shouldn't skip holes
+// eslint-disable-next-line es/no-array-prototype-find -- testing
 if (FIND in []) Array(1)[FIND](function () { SKIPS_HOLES = false; });
 
 // `Array.prototype.find` method
@@ -20311,6 +20392,37 @@ $({ target: 'String', proto: true, forced: !correctIsRegExpLogic('includes') }, 
 
 /***/ }),
 
+/***/ 67153:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var $ = __nccwpck_require__(2374);
+var uncurryThis = __nccwpck_require__(68610);
+var requireObjectCoercible = __nccwpck_require__(19821);
+var toString = __nccwpck_require__(45623);
+
+var charCodeAt = uncurryThis(''.charCodeAt);
+
+// `String.prototype.isWellFormed` method
+// https://github.com/tc39/proposal-is-usv-string
+$({ target: 'String', proto: true }, {
+  isWellFormed: function isWellFormed() {
+    var S = toString(requireObjectCoercible(this));
+    var length = S.length;
+    for (var i = 0; i < length; i++) {
+      var charCode = charCodeAt(S, i);
+      // single UTF-16 code unit
+      if ((charCode & 0xF800) != 0xD800) continue;
+      // unpaired surrogate
+      if (charCode >= 0xDC00 || ++i >= length || (charCodeAt(S, i) & 0xFC00) != 0xDC00) return false;
+    } return true;
+  }
+});
+
+
+/***/ }),
+
 /***/ 66087:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -21236,6 +21348,57 @@ var forcedStringHTMLMethod = __nccwpck_require__(74012);
 $({ target: 'String', proto: true, forced: forcedStringHTMLMethod('sup') }, {
   sup: function sup() {
     return createHTML(this, 'sup', '', '');
+  }
+});
+
+
+/***/ }),
+
+/***/ 69439:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var $ = __nccwpck_require__(2374);
+var call = __nccwpck_require__(7065);
+var uncurryThis = __nccwpck_require__(68610);
+var requireObjectCoercible = __nccwpck_require__(19821);
+var toString = __nccwpck_require__(45623);
+var fails = __nccwpck_require__(64222);
+
+var $Array = Array;
+var charAt = uncurryThis(''.charAt);
+var charCodeAt = uncurryThis(''.charCodeAt);
+var join = uncurryThis([].join);
+// eslint-disable-next-line es/no-string-prototype-iswellformed-towellformed -- safe
+var $toWellFormed = ''.toWellFormed;
+var REPLACEMENT_CHARACTER = '\uFFFD';
+
+// Safari bug
+var TO_STRING_CONVERSION_BUG = $toWellFormed && fails(function () {
+  return call($toWellFormed, 1) !== '1';
+});
+
+// `String.prototype.toWellFormed` method
+// https://github.com/tc39/proposal-is-usv-string
+$({ target: 'String', proto: true, forced: TO_STRING_CONVERSION_BUG }, {
+  toWellFormed: function toWellFormed() {
+    var S = toString(requireObjectCoercible(this));
+    if (TO_STRING_CONVERSION_BUG) return call($toWellFormed, S);
+    var length = S.length;
+    var result = $Array(length);
+    for (var i = 0; i < length; i++) {
+      var charCode = charCodeAt(S, i);
+      // single UTF-16 code unit
+      if ((charCode & 0xF800) != 0xD800) result[i] = charAt(S, i);
+      // unpaired surrogate
+      else if (charCode >= 0xDC00 || i + 1 >= length || (charCodeAt(S, i + 1) & 0xFC00) != 0xDC00) result[i] = REPLACEMENT_CHARACTER;
+      // surrogate pair
+      else {
+        result[i] = charAt(S, i);
+        result[++i] = charAt(S, i);
+      }
+    } return join(result, '');
   }
 });
 
@@ -23542,7 +23705,11 @@ var HINT = 'async-dispose';
 var DISPOSED = 'disposed';
 var PENDING = 'pending';
 
-var ALREADY_DISPOSED = ASYNC_DISPOSABLE_STACK + ' already disposed';
+var getPendingAsyncDisposableStackInternalState = function (stack) {
+  var internalState = getAsyncDisposableStackInternalState(stack);
+  if (internalState.state == DISPOSED) throw $ReferenceError(ASYNC_DISPOSABLE_STACK + ' already disposed');
+  return internalState;
+};
 
 var $AsyncDisposableStack = function AsyncDisposableStack() {
   setInternalState(anInstance(this, AsyncDisposableStackPrototype), {
@@ -23599,32 +23766,29 @@ defineBuiltIns(AsyncDisposableStackPrototype, {
     });
   },
   use: function use(value) {
-    var internalState = getAsyncDisposableStackInternalState(this);
-    if (internalState.state == DISPOSED) throw $ReferenceError(ALREADY_DISPOSED);
-    addDisposableResource(internalState, value, HINT);
+    addDisposableResource(getPendingAsyncDisposableStackInternalState(this), value, HINT);
     return value;
   },
   adopt: function adopt(value, onDispose) {
-    var internalState = getAsyncDisposableStackInternalState(this);
-    if (internalState.state == DISPOSED) throw $ReferenceError(ALREADY_DISPOSED);
+    var internalState = getPendingAsyncDisposableStackInternalState(this);
     aCallable(onDispose);
     addDisposableResource(internalState, undefined, HINT, function () {
-      onDispose(value);
+      return onDispose(value);
     });
     return value;
   },
   defer: function defer(onDispose) {
-    var internalState = getAsyncDisposableStackInternalState(this);
-    if (internalState.state == DISPOSED) throw $ReferenceError(ALREADY_DISPOSED);
+    var internalState = getPendingAsyncDisposableStackInternalState(this);
     aCallable(onDispose);
     addDisposableResource(internalState, undefined, HINT, onDispose);
   },
   move: function move() {
-    var internalState = getAsyncDisposableStackInternalState(this);
-    if (internalState.state == DISPOSED) throw $ReferenceError(ALREADY_DISPOSED);
+    var internalState = getPendingAsyncDisposableStackInternalState(this);
     var newAsyncDisposableStack = new $AsyncDisposableStack();
     getAsyncDisposableStackInternalState(newAsyncDisposableStack).stack = internalState.stack;
     internalState.stack = [];
+    internalState.state = DISPOSED;
+    if (!DESCRIPTORS) this.disposed = true;
     return newAsyncDisposableStack;
   }
 });
@@ -23781,8 +23945,10 @@ var AsyncIteratorProxy = createAsyncIteratorProxy(function (Promise) {
 // https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'AsyncIterator', proto: true, real: true }, {
   drop: function drop(limit) {
+    anObject(this);
+    var remaining = toPositiveInteger(notANaN(+limit));
     return new AsyncIteratorProxy(getIteratorDirect(this), {
-      remaining: toPositiveInteger(notANaN(+limit))
+      remaining: remaining
     });
   }
 });
@@ -23872,8 +24038,10 @@ var AsyncIteratorProxy = createAsyncIteratorProxy(function (Promise) {
 // https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'AsyncIterator', proto: true, real: true }, {
   filter: function filter(predicate) {
+    anObject(this);
+    aCallable(predicate);
     return new AsyncIteratorProxy(getIteratorDirect(this), {
-      predicate: aCallable(predicate)
+      predicate: predicate
     });
   }
 });
@@ -23983,8 +24151,10 @@ var AsyncIteratorProxy = createAsyncIteratorProxy(function (Promise) {
 // https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'AsyncIterator', proto: true, real: true }, {
   flatMap: function flatMap(mapper) {
+    anObject(this);
+    aCallable(mapper);
     return new AsyncIteratorProxy(getIteratorDirect(this), {
-      mapper: aCallable(mapper),
+      mapper: mapper,
       inner: null
     });
   }
@@ -24089,13 +24259,14 @@ var $TypeError = TypeError;
 // https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'AsyncIterator', proto: true, real: true }, {
   reduce: function reduce(reducer /* , initialValue */) {
+    anObject(this);
+    aCallable(reducer);
     var record = getIteratorDirect(this);
     var iterator = record.iterator;
     var next = record.next;
     var noInitial = arguments.length < 2;
     var accumulator = noInitial ? undefined : arguments[1];
     var counter = 0;
-    aCallable(reducer);
 
     return new Promise(function (resolve, reject) {
       var ifAbruptCloseAsyncIterator = function (error) {
@@ -24203,8 +24374,10 @@ var AsyncIteratorProxy = createAsyncIteratorProxy(function (Promise) {
 // https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'AsyncIterator', proto: true, real: true }, {
   take: function take(limit) {
+    anObject(this);
+    var remaining = toPositiveInteger(notANaN(+limit));
     return new AsyncIteratorProxy(getIteratorDirect(this), {
-      remaining: toPositiveInteger(notANaN(+limit))
+      remaining: remaining
     });
   }
 });
@@ -24331,7 +24504,11 @@ var HINT = 'sync-dispose';
 var DISPOSED = 'disposed';
 var PENDING = 'pending';
 
-var ALREADY_DISPOSED = DISPOSABLE_STACK + ' already disposed';
+var getPendingDisposableStackInternalState = function (stack) {
+  var internalState = getDisposableStackInternalState(stack);
+  if (internalState.state == DISPOSED) throw $ReferenceError(DISPOSABLE_STACK + ' already disposed');
+  return internalState;
+};
 
 var $DisposableStack = function DisposableStack() {
   setInternalState(anInstance(this, DisposableStackPrototype), {
@@ -24373,14 +24550,11 @@ defineBuiltIns(DisposableStackPrototype, {
     if (thrown) throw suppressed;
   },
   use: function use(value) {
-    var internalState = getDisposableStackInternalState(this);
-    if (internalState.state == DISPOSED) throw $ReferenceError(ALREADY_DISPOSED);
-    addDisposableResource(internalState, value, HINT);
+    addDisposableResource(getPendingDisposableStackInternalState(this), value, HINT);
     return value;
   },
   adopt: function adopt(value, onDispose) {
-    var internalState = getDisposableStackInternalState(this);
-    if (internalState.state == DISPOSED) throw $ReferenceError(ALREADY_DISPOSED);
+    var internalState = getPendingDisposableStackInternalState(this);
     aCallable(onDispose);
     addDisposableResource(internalState, undefined, HINT, function () {
       onDispose(value);
@@ -24388,17 +24562,17 @@ defineBuiltIns(DisposableStackPrototype, {
     return value;
   },
   defer: function defer(onDispose) {
-    var internalState = getDisposableStackInternalState(this);
-    if (internalState.state == DISPOSED) throw $ReferenceError(ALREADY_DISPOSED);
+    var internalState = getPendingDisposableStackInternalState(this);
     aCallable(onDispose);
     addDisposableResource(internalState, undefined, HINT, onDispose);
   },
   move: function move() {
-    var internalState = getDisposableStackInternalState(this);
-    if (internalState.state == DISPOSED) throw $ReferenceError(ALREADY_DISPOSED);
+    var internalState = getPendingDisposableStackInternalState(this);
     var newDisposableStack = new $DisposableStack();
     getDisposableStackInternalState(newDisposableStack).stack = internalState.stack;
     internalState.stack = [];
+    internalState.state = DISPOSED;
+    if (!DESCRIPTORS) this.disposed = true;
     return newDisposableStack;
   }
 });
@@ -24482,6 +24656,26 @@ var isConstructor = __nccwpck_require__(29258);
 $({ target: 'Function', stat: true, forced: true }, {
   isConstructor: isConstructor
 });
+
+
+/***/ }),
+
+/***/ 29797:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var wellKnownSymbol = __nccwpck_require__(48322);
+var defineProperty = (__nccwpck_require__(37161).f);
+
+var METADATA = wellKnownSymbol('metadata');
+var FunctionPrototype = Function.prototype;
+
+// Function.prototype[@@metadata]
+// https://github.com/tc39/proposal-decorator-metadata
+if (FunctionPrototype[METADATA] === undefined) {
+  defineProperty(FunctionPrototype, METADATA, {
+    value: null
+  });
+}
 
 
 /***/ }),
@@ -24634,8 +24828,10 @@ var IteratorProxy = createIteratorProxy(function () {
 // https://github.com/tc39/proposal-iterator-helpers
 $({ target: 'Iterator', proto: true, real: true }, {
   drop: function drop(limit) {
+    anObject(this);
+    var remaining = toPositiveInteger(notANaN(+limit));
     return new IteratorProxy(getIteratorDirect(this), {
-      remaining: toPositiveInteger(notANaN(+limit))
+      remaining: remaining
     });
   }
 });
@@ -24651,15 +24847,17 @@ $({ target: 'Iterator', proto: true, real: true }, {
 var $ = __nccwpck_require__(2374);
 var iterate = __nccwpck_require__(12566);
 var aCallable = __nccwpck_require__(43466);
+var anObject = __nccwpck_require__(19232);
 var getIteratorDirect = __nccwpck_require__(94737);
 
 // `Iterator.prototype.every` method
 // https://github.com/tc39/proposal-iterator-helpers
 $({ target: 'Iterator', proto: true, real: true }, {
   every: function every(predicate) {
+    anObject(this);
+    aCallable(predicate);
     var record = getIteratorDirect(this);
     var counter = 0;
-    aCallable(predicate);
     return !iterate(record, function (value, stop) {
       if (!predicate(value, counter++)) return stop();
     }, { IS_RECORD: true, INTERRUPTED: true }).stopped;
@@ -24700,8 +24898,10 @@ var IteratorProxy = createIteratorProxy(function () {
 // https://github.com/tc39/proposal-iterator-helpers
 $({ target: 'Iterator', proto: true, real: true }, {
   filter: function filter(predicate) {
+    anObject(this);
+    aCallable(predicate);
     return new IteratorProxy(getIteratorDirect(this), {
-      predicate: aCallable(predicate)
+      predicate: predicate
     });
   }
 });
@@ -24717,15 +24917,17 @@ $({ target: 'Iterator', proto: true, real: true }, {
 var $ = __nccwpck_require__(2374);
 var iterate = __nccwpck_require__(12566);
 var aCallable = __nccwpck_require__(43466);
+var anObject = __nccwpck_require__(19232);
 var getIteratorDirect = __nccwpck_require__(94737);
 
 // `Iterator.prototype.find` method
 // https://github.com/tc39/proposal-iterator-helpers
 $({ target: 'Iterator', proto: true, real: true }, {
   find: function find(predicate) {
+    anObject(this);
+    aCallable(predicate);
     var record = getIteratorDirect(this);
     var counter = 0;
-    aCallable(predicate);
     return iterate(record, function (value, stop) {
       if (predicate(value, counter++)) return stop(value);
     }, { IS_RECORD: true, INTERRUPTED: true }).result;
@@ -24775,8 +24977,10 @@ var IteratorProxy = createIteratorProxy(function () {
 // https://github.com/tc39/proposal-iterator-helpers
 $({ target: 'Iterator', proto: true, real: true }, {
   flatMap: function flatMap(mapper) {
+    anObject(this);
+    aCallable(mapper);
     return new IteratorProxy(getIteratorDirect(this), {
-      mapper: aCallable(mapper),
+      mapper: mapper,
       inner: null
     });
   }
@@ -24793,15 +24997,17 @@ $({ target: 'Iterator', proto: true, real: true }, {
 var $ = __nccwpck_require__(2374);
 var iterate = __nccwpck_require__(12566);
 var aCallable = __nccwpck_require__(43466);
+var anObject = __nccwpck_require__(19232);
 var getIteratorDirect = __nccwpck_require__(94737);
 
 // `Iterator.prototype.forEach` method
 // https://github.com/tc39/proposal-iterator-helpers
 $({ target: 'Iterator', proto: true, real: true }, {
   forEach: function forEach(fn) {
+    anObject(this);
+    aCallable(fn);
     var record = getIteratorDirect(this);
     var counter = 0;
-    aCallable(fn);
     iterate(record, function (value) {
       fn(value, counter++);
     }, { IS_RECORD: true });
@@ -24903,6 +25109,7 @@ $({ target: 'Iterator', stat: true, forced: true }, {
 var $ = __nccwpck_require__(2374);
 var iterate = __nccwpck_require__(12566);
 var aCallable = __nccwpck_require__(43466);
+var anObject = __nccwpck_require__(19232);
 var getIteratorDirect = __nccwpck_require__(94737);
 
 var $TypeError = TypeError;
@@ -24911,8 +25118,9 @@ var $TypeError = TypeError;
 // https://github.com/tc39/proposal-iterator-helpers
 $({ target: 'Iterator', proto: true, real: true }, {
   reduce: function reduce(reducer /* , initialValue */) {
-    var record = getIteratorDirect(this);
+    anObject(this);
     aCallable(reducer);
+    var record = getIteratorDirect(this);
     var noInitial = arguments.length < 2;
     var accumulator = noInitial ? undefined : arguments[1];
     var counter = 0;
@@ -24941,15 +25149,17 @@ $({ target: 'Iterator', proto: true, real: true }, {
 var $ = __nccwpck_require__(2374);
 var iterate = __nccwpck_require__(12566);
 var aCallable = __nccwpck_require__(43466);
+var anObject = __nccwpck_require__(19232);
 var getIteratorDirect = __nccwpck_require__(94737);
 
 // `Iterator.prototype.some` method
 // https://github.com/tc39/proposal-iterator-helpers
 $({ target: 'Iterator', proto: true, real: true }, {
   some: function some(predicate) {
+    anObject(this);
+    aCallable(predicate);
     var record = getIteratorDirect(this);
     var counter = 0;
-    aCallable(predicate);
     return iterate(record, function (value, stop) {
       if (predicate(value, counter++)) return stop();
     }, { IS_RECORD: true, INTERRUPTED: true }).stopped;
@@ -24988,8 +25198,10 @@ var IteratorProxy = createIteratorProxy(function () {
 // https://github.com/tc39/proposal-iterator-helpers
 $({ target: 'Iterator', proto: true, real: true }, {
   take: function take(limit) {
+    anObject(this);
+    var remaining = toPositiveInteger(notANaN(+limit));
     return new IteratorProxy(getIteratorDirect(this), {
-      remaining: toPositiveInteger(notANaN(+limit))
+      remaining: remaining
     });
   }
 });
@@ -25003,6 +25215,7 @@ $({ target: 'Iterator', proto: true, real: true }, {
 "use strict";
 
 var $ = __nccwpck_require__(2374);
+var anObject = __nccwpck_require__(19232);
 var iterate = __nccwpck_require__(12566);
 var getIteratorDirect = __nccwpck_require__(94737);
 
@@ -25013,7 +25226,7 @@ var push = [].push;
 $({ target: 'Iterator', proto: true, real: true }, {
   toArray: function toArray() {
     var result = [];
-    iterate(getIteratorDirect(this), push, { that: result, IS_RECORD: true });
+    iterate(getIteratorDirect(anObject(this)), push, { that: result, IS_RECORD: true });
     return result;
   }
 });
@@ -25027,6 +25240,7 @@ $({ target: 'Iterator', proto: true, real: true }, {
 "use strict";
 
 var $ = __nccwpck_require__(2374);
+var anObject = __nccwpck_require__(19232);
 var AsyncFromSyncIterator = __nccwpck_require__(1543);
 var WrapAsyncIterator = __nccwpck_require__(72384);
 var getIteratorDirect = __nccwpck_require__(94737);
@@ -25035,7 +25249,7 @@ var getIteratorDirect = __nccwpck_require__(94737);
 // https://github.com/tc39/proposal-async-iterator-helpers
 $({ target: 'Iterator', proto: true, real: true }, {
   toAsync: function toAsync() {
-    return new WrapAsyncIterator(getIteratorDirect(new AsyncFromSyncIterator(getIteratorDirect(this))));
+    return new WrapAsyncIterator(getIteratorDirect(new AsyncFromSyncIterator(getIteratorDirect(anObject(this)))));
   }
 });
 
@@ -25600,31 +25814,32 @@ $({ target: 'Map', stat: true, forced: true }, {
 "use strict";
 
 var $ = __nccwpck_require__(2374);
-var call = __nccwpck_require__(7065);
 var uncurryThis = __nccwpck_require__(68610);
-var isCallable = __nccwpck_require__(63774);
 var aCallable = __nccwpck_require__(43466);
+var requireObjectCoercible = __nccwpck_require__(19821);
 var iterate = __nccwpck_require__(12566);
-var Map = (__nccwpck_require__(71505).Map);
+var MapHelpers = __nccwpck_require__(71505);
 
+var Map = MapHelpers.Map;
+var has = MapHelpers.has;
+var get = MapHelpers.get;
+var set = MapHelpers.set;
 var push = uncurryThis([].push);
 
 // `Map.groupBy` method
-// https://github.com/tc39/proposal-collection-methods
+// https://github.com/tc39/proposal-array-grouping
 $({ target: 'Map', stat: true, forced: true }, {
-  groupBy: function groupBy(iterable, keyDerivative) {
-    var C = isCallable(this) ? this : Map;
-    var newMap = new C();
-    aCallable(keyDerivative);
-    var has = aCallable(newMap.has);
-    var get = aCallable(newMap.get);
-    var set = aCallable(newMap.set);
-    iterate(iterable, function (element) {
-      var derivedKey = keyDerivative(element);
-      if (!call(has, newMap, derivedKey)) call(set, newMap, derivedKey, [element]);
-      else push(call(get, newMap, derivedKey), element);
+  groupBy: function groupBy(items, callbackfn) {
+    requireObjectCoercible(items);
+    aCallable(callbackfn);
+    var map = new Map();
+    var k = 0;
+    iterate(items, function (value) {
+      var key = callbackfn(value, k++);
+      if (!has(map, key)) set(map, key, [value]);
+      else push(get(map, key), value);
     });
-    return newMap;
+    return map;
   }
 });
 
@@ -26279,6 +26494,44 @@ $({ target: 'Number', stat: true, forced: true }, {
 
 /***/ }),
 
+/***/ 37551:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var $ = __nccwpck_require__(2374);
+var getBuiltIn = __nccwpck_require__(86632);
+var uncurryThis = __nccwpck_require__(68610);
+var aCallable = __nccwpck_require__(43466);
+var requireObjectCoercible = __nccwpck_require__(19821);
+var toPropertyKey = __nccwpck_require__(45465);
+var iterate = __nccwpck_require__(12566);
+
+var create = getBuiltIn('Object', 'create');
+var push = uncurryThis([].push);
+
+// `Object.groupBy` method
+// https://github.com/tc39/proposal-array-grouping
+$({ target: 'Object', stat: true, forced: true }, {
+  groupBy: function groupBy(items, callbackfn) {
+    requireObjectCoercible(items);
+    aCallable(callbackfn);
+    var obj = create(null);
+    var k = 0;
+    iterate(items, function (value) {
+      var key = toPropertyKey(callbackfn(value, k++));
+      // in some IE versions, `hasOwnProperty` returns incorrect result on integer keys
+      // but since it's a `null` prototype object, we can safely use `in`
+      if (key in obj) push(obj[key], value);
+      else obj[key] = [value];
+    });
+    return obj;
+  }
+});
+
+
+/***/ }),
+
 /***/ 66031:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -26668,6 +26921,30 @@ $({ target: 'Promise', stat: true, forced: true }, {
     var result = perform(callbackfn);
     (result.error ? promiseCapability.reject : promiseCapability.resolve)(result.value);
     return promiseCapability.promise;
+  }
+});
+
+
+/***/ }),
+
+/***/ 3169:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var $ = __nccwpck_require__(2374);
+var newPromiseCapabilityModule = __nccwpck_require__(9276);
+
+// `Promise.withResolvers` method
+// https://github.com/tc39/proposal-promise-with-resolvers
+$({ target: 'Promise', stat: true, forced: true }, {
+  withResolvers: function withResolvers() {
+    var promiseCapability = newPromiseCapabilityModule.f(this);
+    return {
+      promise: promiseCapability.promise,
+      resolve: promiseCapability.resolve,
+      reject: promiseCapability.reject
+    };
   }
 });
 
@@ -27126,12 +27403,18 @@ $({ target: 'Set', proto: true, real: true, forced: true }, {
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var $ = __nccwpck_require__(2374);
+var fails = __nccwpck_require__(64222);
 var intersection = __nccwpck_require__(86810);
 var setMethodAcceptSetLike = __nccwpck_require__(26215);
 
+var INCORRECT = !setMethodAcceptSetLike('intersection') || fails(function () {
+  // eslint-disable-next-line es/no-array-from, es/no-set -- testing
+  return Array.from(new Set([1, 2, 3]).intersection(new Set([3, 2]))) != '3,2';
+});
+
 // `Set.prototype.intersection` method
 // https://github.com/tc39/proposal-set-methods
-$({ target: 'Set', proto: true, real: true, forced: !setMethodAcceptSetLike('intersection') }, {
+$({ target: 'Set', proto: true, real: true, forced: INCORRECT }, {
   intersection: intersection
 });
 
@@ -27719,30 +28002,8 @@ $({ target: 'String', stat: true, forced: true }, {
 /***/ 26171:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
-"use strict";
-
-var $ = __nccwpck_require__(2374);
-var uncurryThis = __nccwpck_require__(68610);
-var requireObjectCoercible = __nccwpck_require__(19821);
-var toString = __nccwpck_require__(45623);
-
-var charCodeAt = uncurryThis(''.charCodeAt);
-
-// `String.prototype.isWellFormed` method
-// https://github.com/tc39/proposal-is-usv-string
-$({ target: 'String', proto: true }, {
-  isWellFormed: function isWellFormed() {
-    var S = toString(requireObjectCoercible(this));
-    var length = S.length;
-    for (var i = 0; i < length; i++) {
-      var charCode = charCodeAt(S, i);
-      // single UTF-16 code unit
-      if ((charCode & 0xF800) != 0xD800) continue;
-      // unpaired surrogate
-      if (charCode >= 0xDC00 || ++i >= length || (charCodeAt(S, i) & 0xFC00) != 0xDC00) return false;
-    } return true;
-  }
-});
+// TODO: Remove from `core-js@4`
+__nccwpck_require__(67153);
 
 
 /***/ }),
@@ -27768,49 +28029,8 @@ __nccwpck_require__(85528);
 /***/ 85514:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
-"use strict";
-
-var $ = __nccwpck_require__(2374);
-var call = __nccwpck_require__(7065);
-var uncurryThis = __nccwpck_require__(68610);
-var requireObjectCoercible = __nccwpck_require__(19821);
-var toString = __nccwpck_require__(45623);
-var fails = __nccwpck_require__(64222);
-
-var $Array = Array;
-var charAt = uncurryThis(''.charAt);
-var charCodeAt = uncurryThis(''.charCodeAt);
-var join = uncurryThis([].join);
-var $toWellFormed = ''.toWellFormed;
-var REPLACEMENT_CHARACTER = '\uFFFD';
-
-// Safari bug
-var TO_STRING_CONVERSION_BUG = $toWellFormed && fails(function () {
-  return call($toWellFormed, 1) !== '1';
-});
-
-// `String.prototype.toWellFormed` method
-// https://github.com/tc39/proposal-is-usv-string
-$({ target: 'String', proto: true, forced: TO_STRING_CONVERSION_BUG }, {
-  toWellFormed: function toWellFormed() {
-    var S = toString(requireObjectCoercible(this));
-    if (TO_STRING_CONVERSION_BUG) return call($toWellFormed, S);
-    var length = S.length;
-    var result = $Array(length);
-    for (var i = 0; i < length; i++) {
-      var charCode = charCodeAt(S, i);
-      // single UTF-16 code unit
-      if ((charCode & 0xF800) != 0xD800) result[i] = charAt(S, i);
-      // unpaired surrogate
-      else if (charCode >= 0xDC00 || i + 1 >= length || (charCodeAt(S, i + 1) & 0xFC00) != 0xDC00) result[i] = REPLACEMENT_CHARACTER;
-      // surrogate pair
-      else {
-        result[i] = charAt(S, i);
-        result[++i] = charAt(S, i);
-      }
-    } return join(result, '');
-  }
-});
+// TODO: Remove from `core-js@4`
+__nccwpck_require__(69439);
 
 
 /***/ }),
@@ -27893,27 +28113,47 @@ defineWellKnownSymbol('dispose');
 
 /***/ }),
 
+/***/ 32402:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var $ = __nccwpck_require__(2374);
+var isRegisteredSymbol = __nccwpck_require__(61926);
+
+// `Symbol.isRegisteredSymbol` method
+// https://tc39.es/proposal-symbol-predicates/#sec-symbol-isregisteredsymbol
+$({ target: 'Symbol', stat: true }, {
+  isRegisteredSymbol: isRegisteredSymbol
+});
+
+
+/***/ }),
+
 /***/ 38068:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var $ = __nccwpck_require__(2374);
-var getBuiltIn = __nccwpck_require__(86632);
-var uncurryThis = __nccwpck_require__(68610);
-
-var Symbol = getBuiltIn('Symbol');
-var keyFor = Symbol.keyFor;
-var thisSymbolValue = uncurryThis(Symbol.prototype.valueOf);
+var isRegisteredSymbol = __nccwpck_require__(61926);
 
 // `Symbol.isRegistered` method
-// https://tc39.es/proposal-symbol-predicates/#sec-symbol-isregistered
-$({ target: 'Symbol', stat: true }, {
-  isRegistered: function isRegistered(value) {
-    try {
-      return keyFor(thisSymbolValue(value)) !== undefined;
-    } catch (error) {
-      return false;
-    }
-  }
+// obsolete version of https://tc39.es/proposal-symbol-predicates/#sec-symbol-isregisteredsymbol
+$({ target: 'Symbol', stat: true, name: 'isRegisteredSymbol' }, {
+  isRegistered: isRegisteredSymbol
+});
+
+
+/***/ }),
+
+/***/ 34822:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var $ = __nccwpck_require__(2374);
+var isWellKnownSymbol = __nccwpck_require__(83222);
+
+// `Symbol.isWellKnownSymbol` method
+// https://tc39.es/proposal-symbol-predicates/#sec-symbol-iswellknownsymbol
+// We should patch it for newly added well-known symbols. If it's not required, this module just will not be injected
+$({ target: 'Symbol', stat: true, forced: true }, {
+  isWellKnownSymbol: isWellKnownSymbol
 });
 
 
@@ -27923,40 +28163,13 @@ $({ target: 'Symbol', stat: true }, {
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var $ = __nccwpck_require__(2374);
-var shared = __nccwpck_require__(13023);
-var getBuiltIn = __nccwpck_require__(86632);
-var uncurryThis = __nccwpck_require__(68610);
-var isSymbol = __nccwpck_require__(9370);
-var wellKnownSymbol = __nccwpck_require__(48322);
-
-var Symbol = getBuiltIn('Symbol');
-var $isWellKnown = Symbol.isWellKnown;
-var getOwnPropertyNames = getBuiltIn('Object', 'getOwnPropertyNames');
-var thisSymbolValue = uncurryThis(Symbol.prototype.valueOf);
-var WellKnownSymbolsStore = shared('wks');
-
-for (var i = 0, symbolKeys = getOwnPropertyNames(Symbol), symbolKeysLength = symbolKeys.length; i < symbolKeysLength; i++) {
-  // some old engines throws on access to some keys like `arguments` or `caller`
-  try {
-    var symbolKey = symbolKeys[i];
-    if (isSymbol(Symbol[symbolKey])) wellKnownSymbol(symbolKey);
-  } catch (error) { /* empty */ }
-}
+var isWellKnownSymbol = __nccwpck_require__(83222);
 
 // `Symbol.isWellKnown` method
-// https://tc39.es/proposal-symbol-predicates/#sec-symbol-iswellknown
+// obsolete version of https://tc39.es/proposal-symbol-predicates/#sec-symbol-iswellknownsymbol
 // We should patch it for newly added well-known symbols. If it's not required, this module just will not be injected
-$({ target: 'Symbol', stat: true, forced: true }, {
-  isWellKnown: function isWellKnown(value) {
-    if ($isWellKnown && $isWellKnown(value)) return true;
-    try {
-      var symbol = thisSymbolValue(value);
-      for (var j = 0, keys = getOwnPropertyNames(WellKnownSymbolsStore), keysLength = keys.length; j < keysLength; j++) {
-        if (WellKnownSymbolsStore[keys[j]] == symbol) return true;
-      }
-    } catch (error) { /* empty */ }
-    return false;
-  }
+$({ target: 'Symbol', stat: true, name: 'isWellKnownSymbol', forced: true }, {
+  isWellKnown: isWellKnownSymbol
 });
 
 
@@ -29204,6 +29417,11 @@ var throwUnpolyfillable = function (type, action) {
   throw new DOMException((action || 'Cloning') + ' of ' + type + ' cannot be properly polyfilled in this engine', DATA_CLONE_ERROR);
 };
 
+var tryNativeRestrictedStructuredClone = function (value, type) {
+  if (!nativeRestrictedStructuredClone) throwUnpolyfillable(type);
+  return nativeRestrictedStructuredClone(value);
+};
+
 var createDataTransfer = function () {
   var dataTransfer;
   try {
@@ -29324,10 +29542,19 @@ var structuredCloneInternal = function (value, map) {
           structuredCloneInternal(value.p4, map)
         );
       } catch (error) {
-        if (nativeRestrictedStructuredClone) {
-          cloned = nativeRestrictedStructuredClone(value);
-        } else throwUnpolyfillable(type);
+        cloned = tryNativeRestrictedStructuredClone(value, type);
       }
+      break;
+    case 'File':
+      if (nativeRestrictedStructuredClone) try {
+        cloned = nativeRestrictedStructuredClone(value);
+        // NodeJS 20.0.0 bug, https://github.com/nodejs/node/issues/47612
+        if (classof(cloned) !== type) cloned = undefined;
+      } catch (error) { /* empty */ }
+      if (!cloned) try {
+        cloned = new File([value], value.name, value);
+      } catch (error) { /* empty */ }
+      if (!cloned) throwUnpolyfillable(type);
       break;
     case 'FileList':
       dataTransfer = createDataTransfer();
@@ -29336,9 +29563,7 @@ var structuredCloneInternal = function (value, map) {
           dataTransfer.items.add(structuredCloneInternal(value[i], map));
         }
         cloned = dataTransfer.files;
-      } else if (nativeRestrictedStructuredClone) {
-        cloned = nativeRestrictedStructuredClone(value);
-      } else throwUnpolyfillable(type);
+      } else cloned = tryNativeRestrictedStructuredClone(value, type);
       break;
     case 'ImageData':
       // Safari 9 ImageData is a constructor, but typeof ImageData is 'object'
@@ -29350,9 +29575,7 @@ var structuredCloneInternal = function (value, map) {
           { colorSpace: value.colorSpace }
         );
       } catch (error) {
-        if (nativeRestrictedStructuredClone) {
-          cloned = nativeRestrictedStructuredClone(value);
-        } else throwUnpolyfillable(type);
+        cloned = tryNativeRestrictedStructuredClone(value, type);
       } break;
     default:
       if (nativeRestrictedStructuredClone) {
@@ -29443,12 +29666,6 @@ var structuredCloneInternal = function (value, map) {
             cloned = value.clone();
           } catch (error) {
             throwUncloneable(type);
-          } break;
-        case 'File':
-          try {
-            cloned = new File([value], value.name, value);
-          } catch (error) {
-            throwUnpolyfillable(type);
           } break;
         case 'CropTarget':
         case 'CryptoKey':
@@ -29804,7 +30021,7 @@ var URLSearchParamsConstructor = function URLSearchParams(/* init */) {
   anInstance(this, URLSearchParamsPrototype);
   var init = arguments.length > 0 ? arguments[0] : undefined;
   var state = setInternalState(this, new URLSearchParamsState(init));
-  if (!DESCRIPTORS) this.length = state.entries.length;
+  if (!DESCRIPTORS) this.size = state.entries.length;
 };
 
 var URLSearchParamsPrototype = URLSearchParamsConstructor.prototype;
@@ -29813,32 +30030,37 @@ defineBuiltIns(URLSearchParamsPrototype, {
   // `URLSearchParams.prototype.append` method
   // https://url.spec.whatwg.org/#dom-urlsearchparams-append
   append: function append(name, value) {
-    validateArgumentsLength(arguments.length, 2);
     var state = getInternalParamsState(this);
+    validateArgumentsLength(arguments.length, 2);
     push(state.entries, { key: $toString(name), value: $toString(value) });
     if (!DESCRIPTORS) this.length++;
     state.updateURL();
   },
   // `URLSearchParams.prototype.delete` method
   // https://url.spec.whatwg.org/#dom-urlsearchparams-delete
-  'delete': function (name) {
-    validateArgumentsLength(arguments.length, 1);
+  'delete': function (name /* , value */) {
     var state = getInternalParamsState(this);
+    var length = validateArgumentsLength(arguments.length, 1);
     var entries = state.entries;
     var key = $toString(name);
+    var $value = length < 2 ? undefined : arguments[1];
+    var value = $value === undefined ? $value : $toString($value);
     var index = 0;
     while (index < entries.length) {
-      if (entries[index].key === key) splice(entries, index, 1);
-      else index++;
+      var entry = entries[index];
+      if (entry.key === key && (value === undefined || entry.value === value)) {
+        splice(entries, index, 1);
+        if (value !== undefined) break;
+      } else index++;
     }
-    if (!DESCRIPTORS) this.length = entries.length;
+    if (!DESCRIPTORS) this.size = entries.length;
     state.updateURL();
   },
   // `URLSearchParams.prototype.get` method
   // https://url.spec.whatwg.org/#dom-urlsearchparams-get
   get: function get(name) {
-    validateArgumentsLength(arguments.length, 1);
     var entries = getInternalParamsState(this).entries;
+    validateArgumentsLength(arguments.length, 1);
     var key = $toString(name);
     var index = 0;
     for (; index < entries.length; index++) {
@@ -29849,8 +30071,8 @@ defineBuiltIns(URLSearchParamsPrototype, {
   // `URLSearchParams.prototype.getAll` method
   // https://url.spec.whatwg.org/#dom-urlsearchparams-getall
   getAll: function getAll(name) {
-    validateArgumentsLength(arguments.length, 1);
     var entries = getInternalParamsState(this).entries;
+    validateArgumentsLength(arguments.length, 1);
     var key = $toString(name);
     var result = [];
     var index = 0;
@@ -29861,21 +30083,24 @@ defineBuiltIns(URLSearchParamsPrototype, {
   },
   // `URLSearchParams.prototype.has` method
   // https://url.spec.whatwg.org/#dom-urlsearchparams-has
-  has: function has(name) {
-    validateArgumentsLength(arguments.length, 1);
+  has: function has(name /* , value */) {
     var entries = getInternalParamsState(this).entries;
+    var length = validateArgumentsLength(arguments.length, 1);
     var key = $toString(name);
+    var $value = length < 2 ? undefined : arguments[1];
+    var value = $value === undefined ? $value : $toString($value);
     var index = 0;
     while (index < entries.length) {
-      if (entries[index++].key === key) return true;
+      var entry = entries[index++];
+      if (entry.key === key && (value === undefined || entry.value === value)) return true;
     }
     return false;
   },
   // `URLSearchParams.prototype.set` method
   // https://url.spec.whatwg.org/#dom-urlsearchparams-set
   set: function set(name, value) {
-    validateArgumentsLength(arguments.length, 1);
     var state = getInternalParamsState(this);
+    validateArgumentsLength(arguments.length, 1);
     var entries = state.entries;
     var found = false;
     var key = $toString(name);
@@ -29893,7 +30118,7 @@ defineBuiltIns(URLSearchParamsPrototype, {
       }
     }
     if (!found) push(entries, { key: key, value: val });
-    if (!DESCRIPTORS) this.length = entries.length;
+    if (!DESCRIPTORS) this.size = entries.length;
     state.updateURL();
   },
   // `URLSearchParams.prototype.sort` method
@@ -30008,6 +30233,94 @@ module.exports = {
 
 /***/ }),
 
+/***/ 57054:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var defineBuiltIn = __nccwpck_require__(56986);
+var uncurryThis = __nccwpck_require__(68610);
+var toString = __nccwpck_require__(45623);
+var validateArgumentsLength = __nccwpck_require__(80493);
+
+var $URLSearchParams = URLSearchParams;
+var URLSearchParamsPrototype = $URLSearchParams.prototype;
+var append = uncurryThis(URLSearchParamsPrototype.append);
+var $delete = uncurryThis(URLSearchParamsPrototype['delete']);
+var forEach = uncurryThis(URLSearchParamsPrototype.forEach);
+var push = uncurryThis([].push);
+var params = new $URLSearchParams('a=1&a=2');
+
+params['delete']('a', 1);
+
+if (params + '' !== 'a=2') {
+  defineBuiltIn(URLSearchParamsPrototype, 'delete', function (name /* , value */) {
+    var length = arguments.length;
+    var $value = length < 2 ? undefined : arguments[1];
+    if (length && $value === undefined) return $delete(this, name);
+    var entries = [];
+    forEach(this, function (v, k) { // also validates `this`
+      push(entries, { key: k, value: v });
+    });
+    validateArgumentsLength(length, 1);
+    var key = toString(name);
+    var value = toString($value);
+    var index = 0;
+    var dindex = 0;
+    var found = false;
+    var entriesLength = entries.length;
+    var entry;
+    while (index < entriesLength) {
+      entry = entries[index++];
+      if (found || entry.key === key) {
+        found = true;
+        $delete(this, entry.key);
+      } else dindex++;
+    }
+    while (dindex < entriesLength) {
+      entry = entries[dindex++];
+      if (!(entry.key === key && entry.value === value)) append(this, entry.key, entry.value);
+    }
+  }, { enumerable: true, unsafe: true });
+}
+
+
+/***/ }),
+
+/***/ 87001:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var defineBuiltIn = __nccwpck_require__(56986);
+var uncurryThis = __nccwpck_require__(68610);
+var toString = __nccwpck_require__(45623);
+var validateArgumentsLength = __nccwpck_require__(80493);
+
+var $URLSearchParams = URLSearchParams;
+var URLSearchParamsPrototype = $URLSearchParams.prototype;
+var getAll = uncurryThis(URLSearchParamsPrototype.getAll);
+var $has = uncurryThis(URLSearchParamsPrototype.has);
+var params = new $URLSearchParams('a=1');
+
+if (params.has('a', 2)) {
+  defineBuiltIn(URLSearchParamsPrototype, 'has', function has(name /* , value */) {
+    var length = arguments.length;
+    var $value = length < 2 ? undefined : arguments[1];
+    if (length && $value === undefined) return $has(this, name);
+    var values = getAll(this, name); // also validates `this`
+    validateArgumentsLength(length, 1);
+    var value = toString($value);
+    var index = 0;
+    while (index < values.length) {
+      if (values[index++] === value) return true;
+    } return false;
+  }, { enumerable: true, unsafe: true });
+}
+
+
+/***/ }),
+
 /***/ 39819:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -30042,6 +30355,42 @@ if (DESCRIPTORS && !('size' in URLSearchParamsPrototype)) {
     enumerable: true
   });
 }
+
+
+/***/ }),
+
+/***/ 17513:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var $ = __nccwpck_require__(2374);
+var getBuiltIn = __nccwpck_require__(86632);
+var fails = __nccwpck_require__(64222);
+var validateArgumentsLength = __nccwpck_require__(80493);
+var toString = __nccwpck_require__(45623);
+var USE_NATIVE_URL = __nccwpck_require__(70862);
+
+var URL = getBuiltIn('URL');
+
+// https://github.com/nodejs/node/issues/47505
+// https://github.com/denoland/deno/issues/18893
+var THROWS_WITHOUT_ARGUMENTS = USE_NATIVE_URL && fails(function () {
+  URL.canParse();
+});
+
+// `URL.canParse` method
+// https://url.spec.whatwg.org/#dom-url-canparse
+$({ target: 'URL', stat: true, forced: !THROWS_WITHOUT_ARGUMENTS }, {
+  canParse: function canParse(url) {
+    var length = validateArgumentsLength(arguments.length, 1);
+    var urlString = toString(url);
+    var base = length < 2 || arguments[1] === undefined ? undefined : toString(arguments[1]);
+    try {
+      return !!new URL(urlString, base);
+    } catch (error) {
+      return false;
+    }
+  }
+});
 
 
 /***/ }),
@@ -68217,6 +68566,7 @@ var core = __nccwpck_require__(75316);
 const promises_namespaceObject = require("fs/promises");
 ;// CONCATENATED MODULE: ./src/utils/build-params-from-inputs.ts
 
+const JSCRAMBLER_CLIENT_ID = 7;
 async function buildParamsFromInputs(params) {
     let finalParams;
     if (params.jscramblerConfigPath !== undefined) {
@@ -68238,6 +68588,7 @@ async function buildParamsFromInputs(params) {
     delete finalParams.jscramblerConfigPath;
     delete finalParams.sourceMapsOutputPath;
     delete finalParams.symbolTableOutputPath;
+    finalParams.clientId = JSCRAMBLER_CLIENT_ID;
     return { finalParams, sourceMapsOutputPath, symbolTableOutputPath };
 }
 

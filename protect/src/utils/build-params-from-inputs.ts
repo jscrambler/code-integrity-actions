@@ -1,6 +1,8 @@
 import {readFile} from 'fs/promises';
 import type {InputParams} from './get-inputs';
 
+const JSCRAMBLER_CLIENT_ID = 7;
+
 export default async function buildParamsFromInputs(params: InputParams) {
   let finalParams: any;
   if (params.jscramblerConfigPath !== undefined) {
@@ -24,5 +26,8 @@ export default async function buildParamsFromInputs(params: InputParams) {
   delete finalParams.jscramblerConfigPath;
   delete finalParams.sourceMapsOutputPath;
   delete finalParams.symbolTableOutputPath;
+
+  finalParams.clientId = JSCRAMBLER_CLIENT_ID;
+
   return {finalParams, sourceMapsOutputPath, symbolTableOutputPath};
 }

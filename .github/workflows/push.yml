@@ -37,18 +37,18 @@ jobs:
           access-key: ${{ secrets.JSCRAMBLER_ACCESS_KEY }}
           jscrambler-config-path: jscrambler.json
           files-src: |
-            protect/dist/index.js
-          files-dest: protect/dist-obfuscated/
+            protect/src/utils/__tests__/fixtures/*.js
+          files-dest: protect/src/utils/__tests__/fixtures-obfuscated/
           source-maps: true
-          source-maps-output-path: protect/dist-extra/
-          symbol-table-output-path: protect/dist-extra/symbols/
+          source-maps-output-path: protect/src/utils/__tests__/fixtures-extra/
+          symbol-table-output-path: protect/src/utils/__tests__/fixtures-extra/symbols/
       - name: Check protection-id
         if: "${{ steps.jscrambler.outputs.protection-id == '' }}"
         run: exit 1
       - name: Check Generated Files
         uses: andstor/file-existence-action@v2
         with:
-          files: "protect/dist-obfuscated/protect/dist/index.js, protect/dist-extra/jscramblerSourceMaps/protect/dist/index.js.map, protect/dist-extra/symbols/*_symbolTable.json"
+          files: "protect/src/utils/__tests__/fixtures-obfuscated/protect/src/utils/__tests__/fixtures/index.js, protect/src/utils/__tests__/fixtures-extra/jscramblerSourceMaps/protect/src/utils/__tests__/fixtures/index.js.map, protect/src/utils/__tests__/fixtures-extra/symbols/*_symbolTable.json"
           fail: true
       # - name: Upload source maps
       #  uses: actions/upload-artifact@v3

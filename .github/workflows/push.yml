@@ -48,7 +48,7 @@ jobs:
       - name: Check Generated Files
         uses: andstor/file-existence-action@v2
         with:
-          files: "protect/src/utils/__tests__/fixtures-obfuscated/protect/src/utils/__tests__/fixtures/index.js, protect/src/utils/__tests__/fixtures-extra/jscramblerSourceMaps/protect/src/utils/__tests__/fixtures/index.js.map, protect/src/utils/__tests__/fixtures-extra/symbols/*_symbolTable.json"
+          files: "protect/src/utils/__tests__/fixtures-obfuscated/protect/src/utils/__tests__/fixtures/*.js, protect/src/utils/__tests__/fixtures-extra/jscramblerSourceMaps/protect/src/utils/__tests__/fixtures/*.js.map, protect/src/utils/__tests__/fixtures-extra/symbols/*_symbolTable.json"
           fail: true
       # - name: Upload source maps
       #  uses: actions/upload-artifact@v3

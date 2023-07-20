@@ -6,7 +6,7 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  testPathIgnorePatterns: ['__utils__/'],
+  testPathIgnorePatterns: ['fixtures/'],
   clearMocks: true,
   detectOpenHandles: true,
   testTimeout: 10000,

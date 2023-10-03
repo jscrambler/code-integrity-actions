@@ -3690,6 +3690,7 @@ __nccwpck_require__(45196);
 __nccwpck_require__(81979);
 __nccwpck_require__(33506);
 __nccwpck_require__(5049);
+__nccwpck_require__(67115);
 __nccwpck_require__(12655);
 __nccwpck_require__(16921);
 __nccwpck_require__(72203);
@@ -3804,7 +3805,7 @@ var $TypeError = TypeError;
 // `Assert: IsCallable(argument) is true`
 module.exports = function (argument) {
   if (isCallable(argument)) return argument;
-  throw $TypeError(tryToString(argument) + ' is not a function');
+  throw new $TypeError(tryToString(argument) + ' is not a function');
 };
 
 
@@ -3823,7 +3824,7 @@ var $TypeError = TypeError;
 // `Assert: IsConstructor(argument) is true`
 module.exports = function (argument) {
   if (isConstructor(argument)) return argument;
-  throw $TypeError(tryToString(argument) + ' is not a constructor');
+  throw new $TypeError(tryToString(argument) + ' is not a constructor');
 };
 
 
@@ -3857,7 +3858,7 @@ var $TypeError = TypeError;
 
 module.exports = function (argument) {
   if (typeof argument == 'object' || isCallable(argument)) return argument;
-  throw $TypeError("Can't set " + $String(argument) + ' as a prototype');
+  throw new $TypeError("Can't set " + $String(argument) + ' as a prototype');
 };
 
 
@@ -4030,7 +4031,7 @@ var $TypeError = TypeError;
 
 module.exports = function (it, Prototype) {
   if (isPrototypeOf(Prototype, it)) return it;
-  throw $TypeError('Incorrect invocation');
+  throw new $TypeError('Incorrect invocation');
 };
 
 
@@ -4049,7 +4050,7 @@ var $TypeError = TypeError;
 // `Assert: Type(argument) is Object`
 module.exports = function (argument) {
   if (isObject(argument)) return argument;
-  throw $TypeError($String(argument) + ' is not an object');
+  throw new $TypeError($String(argument) + ' is not an object');
 };
 
 
@@ -4080,7 +4081,7 @@ var $TypeError = TypeError;
 // - Perform ? RequireInternalSlot(O, [[ArrayBufferData]]).
 // - If IsSharedArrayBuffer(O) is true, throw a TypeError exception.
 module.exports = uncurryThisAccessor(ArrayBuffer.prototype, 'byteLength', 'get') || function (O) {
-  if (classof(O) !== 'ArrayBuffer') throw $TypeError('ArrayBuffer expected');
+  if (classof(O) !== 'ArrayBuffer') throw new $TypeError('ArrayBuffer expected');
   return O.byteLength;
 };
 
@@ -4140,12 +4141,13 @@ var uncurryThisAccessor = __nccwpck_require__(76748);
 var toIndex = __nccwpck_require__(37017);
 var isDetached = __nccwpck_require__(18346);
 var arrayBufferByteLength = __nccwpck_require__(36374);
-var PROPER_TRANSFER = __nccwpck_require__(13177);
+var detachTransferable = __nccwpck_require__(4743);
+var PROPER_STRUCTURED_CLONE_TRANSFER = __nccwpck_require__(13177);
 
-var TypeError = global.TypeError;
 var structuredClone = global.structuredClone;
 var ArrayBuffer = global.ArrayBuffer;
 var DataView = global.DataView;
+var TypeError = global.TypeError;
 var min = Math.min;
 var ArrayBufferPrototype = ArrayBuffer.prototype;
 var DataViewPrototype = DataView.prototype;
@@ -4155,21 +4157,28 @@ var maxByteLength = uncurryThisAccessor(ArrayBufferPrototype, 'maxByteLength', '
 var getInt8 = uncurryThis(DataViewPrototype.getInt8);
 var setInt8 = uncurryThis(DataViewPrototype.setInt8);
 
-module.exports = PROPER_TRANSFER && function (arrayBuffer, newLength, preserveResizability) {
+module.exports = (PROPER_STRUCTURED_CLONE_TRANSFER || detachTransferable) && function (arrayBuffer, newLength, preserveResizability) {
   var byteLength = arrayBufferByteLength(arrayBuffer);
   var newByteLength = newLength === undefined ? byteLength : toIndex(newLength);
   var fixedLength = !isResizable || !isResizable(arrayBuffer);
-  if (isDetached(arrayBuffer)) throw TypeError('ArrayBuffer is detached');
-  var newBuffer = structuredClone(arrayBuffer, { transfer: [arrayBuffer] });
-  if (byteLength === newByteLength && (preserveResizability || fixedLength)) return newBuffer;
-  if (byteLength >= newByteLength && (!preserveResizability || fixedLength)) return slice(newBuffer, 0, newByteLength);
-  var options = (preserveResizability && !fixedLength) && maxByteLength ? { maxByteLength: maxByteLength(newBuffer) } : undefined;
-  var newNewBuffer = new ArrayBuffer(newByteLength, options);
-  var a = new DataView(newBuffer);
-  var b = new DataView(newNewBuffer);
-  var copyLength = min(newByteLength, byteLength);
-  for (var i = 0; i < copyLength; i++) setInt8(b, i, getInt8(a, i));
-  return newNewBuffer;
+  var newBuffer;
+  if (isDetached(arrayBuffer)) throw new TypeError('ArrayBuffer is detached');
+  if (PROPER_STRUCTURED_CLONE_TRANSFER) {
+    arrayBuffer = structuredClone(arrayBuffer, { transfer: [arrayBuffer] });
+    if (byteLength === newByteLength && (preserveResizability || fixedLength)) return arrayBuffer;
+  }
+  if (byteLength >= newByteLength && (!preserveResizability || fixedLength)) {
+    newBuffer = slice(arrayBuffer, 0, newByteLength);
+  } else {
+    var options = preserveResizability && !fixedLength && maxByteLength ? { maxByteLength: maxByteLength(arrayBuffer) } : undefined;
+    newBuffer = new ArrayBuffer(newByteLength, options);
+    var a = new DataView(arrayBuffer);
+    var b = new DataView(newBuffer);
+    var copyLength = min(newByteLength, byteLength);
+    for (var i = 0; i < copyLength; i++) setInt8(b, i, getInt8(a, i));
+  }
+  if (!PROPER_STRUCTURED_CLONE_TRANSFER) detachTransferable(arrayBuffer);
+  return newBuffer;
 };
 
 
@@ -4258,12 +4267,12 @@ var isTypedArray = function (it) {
 
 var aTypedArray = function (it) {
   if (isTypedArray(it)) return it;
-  throw TypeError('Target is not a typed array');
+  throw new TypeError('Target is not a typed array');
 };
 
 var aTypedArrayConstructor = function (C) {
   if (isCallable(C) && (!setPrototypeOf || isPrototypeOf(TypedArray, C))) return C;
-  throw TypeError(tryToString(C) + ' is not a typed array constructor');
+  throw new TypeError(tryToString(C) + ' is not a typed array constructor');
 };
 
 var exportTypedArrayMethod = function (KEY, property, forced, options) {
@@ -4327,7 +4336,7 @@ for (NAME in BigIntArrayConstructorsList) {
 if (!NATIVE_ARRAY_BUFFER_VIEWS || !isCallable(TypedArray) || TypedArray === Function.prototype) {
   // eslint-disable-next-line no-shadow -- safe
   TypedArray = function TypedArray() {
-    throw TypeError('Incorrect invocation');
+    throw new TypeError('Incorrect invocation');
   };
   if (NATIVE_ARRAY_BUFFER_VIEWS) for (NAME in TypedArrayConstructorsList) {
     if (global[NAME]) setPrototypeOf(global[NAME], TypedArray);
@@ -4394,6 +4403,7 @@ var anInstance = __nccwpck_require__(19324);
 var toIntegerOrInfinity = __nccwpck_require__(4391);
 var toLength = __nccwpck_require__(11150);
 var toIndex = __nccwpck_require__(37017);
+var fround = __nccwpck_require__(16798);
 var IEEE754 = __nccwpck_require__(30309);
 var getPrototypeOf = __nccwpck_require__(13128);
 var setPrototypeOf = __nccwpck_require__(26435);
@@ -4444,7 +4454,7 @@ var unpackInt32 = function (buffer) {
 };
 
 var packFloat32 = function (number) {
-  return packIEEE754(number, 23, 4);
+  return packIEEE754(fround(number), 23, 4);
 };
 
 var packFloat64 = function (number) {
@@ -4464,7 +4474,7 @@ var get = function (view, count, index, isLittleEndian) {
   var store = getInternalDataViewState(view);
   var intIndex = toIndex(index);
   var boolIsLittleEndian = !!isLittleEndian;
-  if (intIndex + count > store.byteLength) throw RangeError(WRONG_INDEX);
+  if (intIndex + count > store.byteLength) throw new RangeError(WRONG_INDEX);
   var bytes = store.bytes;
   var start = intIndex + store.byteOffset;
   var pack = arraySlice(bytes, start, start + count);
@@ -4476,7 +4486,7 @@ var set = function (view, count, index, conversion, value, isLittleEndian) {
   var intIndex = toIndex(index);
   var pack = conversion(+value);
   var boolIsLittleEndian = !!isLittleEndian;
-  if (intIndex + count > store.byteLength) throw RangeError(WRONG_INDEX);
+  if (intIndex + count > store.byteLength) throw new RangeError(WRONG_INDEX);
   var bytes = store.bytes;
   var start = intIndex + store.byteOffset;
   for (var i = 0; i < count; i++) bytes[start + i] = pack[boolIsLittleEndian ? i : count - i - 1];
@@ -4505,9 +4515,9 @@ if (!NATIVE_ARRAY_BUFFER) {
     var bufferState = getInternalArrayBufferState(buffer);
     var bufferLength = bufferState.byteLength;
     var offset = toIntegerOrInfinity(byteOffset);
-    if (offset < 0 || offset > bufferLength) throw RangeError('Wrong offset');
+    if (offset < 0 || offset > bufferLength) throw new RangeError('Wrong offset');
     byteLength = byteLength === undefined ? bufferLength - offset : toLength(byteLength);
-    if (offset + byteLength > bufferLength) throw RangeError(WRONG_LENGTH);
+    if (offset + byteLength > bufferLength) throw new RangeError(WRONG_LENGTH);
     setInternalState(this, {
       type: DATA_VIEW,
       buffer: buffer,
@@ -5221,7 +5231,7 @@ var createMethod = function (IS_RIGHT) {
       }
       index += i;
       if (IS_RIGHT ? index < 0 : length <= index) {
-        throw $TypeError('Reduce of empty array with no initial value');
+        throw new $TypeError('Reduce of empty array with no initial value');
       }
     }
     for (;IS_RIGHT ? index >= 0 : length > index; index += i) if (index in self) {
@@ -5269,7 +5279,7 @@ var SILENT_ON_NON_WRITABLE_LENGTH_SET = DESCRIPTORS && !function () {
 
 module.exports = SILENT_ON_NON_WRITABLE_LENGTH_SET ? function (O, length) {
   if (isArray(O) && !getOwnPropertyDescriptor(O, 'length').writable) {
-    throw $TypeError('Cannot set read only .length');
+    throw new $TypeError('Cannot set read only .length');
   } return O.length = length;
 } : function (O, length) {
   return O.length = length;
@@ -5495,7 +5505,7 @@ module.exports = function (O, C, index, value) {
   var len = lengthOfArrayLike(O);
   var relativeIndex = toIntegerOrInfinity(index);
   var actualIndex = relativeIndex < 0 ? len + relativeIndex : relativeIndex;
-  if (actualIndex >= len || actualIndex < 0) throw $RangeError('Incorrect index');
+  if (actualIndex >= len || actualIndex < 0) throw new $RangeError('Incorrect index');
   var A = new C(len);
   var k = 0;
   for (; k < len; k++) A[k] = k === actualIndex ? value : O[k];
@@ -6660,7 +6670,7 @@ module.exports = function () {
   for (i = 0; i < length; i++) {
     if (isObject(it = arguments[i])) active = active.next(i, it, true);
   }
-  if (this === $Object && active === root) throw $TypeError('Composite keys must contain a non-primitive component');
+  if (this === $Object && active === root) throw new $TypeError('Composite keys must contain a non-primitive component');
   for (i = 0; i < length; i++) {
     if (!isObject(it = arguments[i])) active = active.next(i, it, false);
   } return active;
@@ -6858,7 +6868,7 @@ module.exports = (fails(function () {
 }) || !fails(function () {
   nativeDateToISOString.call(new Date(NaN));
 })) ? function toISOString() {
-  if (!$isFinite(thisTimeValue(this))) throw $RangeError('Invalid time value');
+  if (!$isFinite(thisTimeValue(this))) throw new $RangeError('Invalid time value');
   var date = this;
   var year = getUTCFullYear(date);
   var milliseconds = getUTCMilliseconds(date);
@@ -6891,7 +6901,7 @@ var $TypeError = TypeError;
 module.exports = function (hint) {
   anObject(this);
   if (hint === 'string' || hint === 'default') hint = 'string';
-  else if (hint !== 'number') throw $TypeError('Incorrect hint');
+  else if (hint !== 'number') throw new $TypeError('Incorrect hint');
   return ordinaryToPrimitive(this, hint);
 };
 
@@ -6997,7 +7007,7 @@ var tryToString = __nccwpck_require__(40791);
 var $TypeError = TypeError;
 
 module.exports = function (O, P) {
-  if (!delete O[P]) throw $TypeError('Cannot delete property ' + tryToString(P) + ' of ' + tryToString(O));
+  if (!delete O[P]) throw new $TypeError('Cannot delete property ' + tryToString(P) + ' of ' + tryToString(O));
 };
 
 
@@ -7015,6 +7025,51 @@ module.exports = !fails(function () {
   // eslint-disable-next-line es/no-object-defineproperty -- required for testing
   return Object.defineProperty({}, 1, { get: function () { return 7; } })[1] !== 7;
 });
+
+
+/***/ }),
+
+/***/ 4743:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var global = __nccwpck_require__(31157);
+var tryNodeRequire = __nccwpck_require__(66830);
+var PROPER_STRUCTURED_CLONE_TRANSFER = __nccwpck_require__(13177);
+
+var structuredClone = global.structuredClone;
+var $ArrayBuffer = global.ArrayBuffer;
+var $MessageChannel = global.MessageChannel;
+var detach = false;
+var WorkerThreads, channel, buffer, $detach;
+
+if (PROPER_STRUCTURED_CLONE_TRANSFER) {
+  detach = function (transferable) {
+    structuredClone(transferable, { transfer: [transferable] });
+  };
+} else if ($ArrayBuffer) try {
+  if (!$MessageChannel) {
+    WorkerThreads = tryNodeRequire('worker_threads');
+    if (WorkerThreads) $MessageChannel = WorkerThreads.MessageChannel;
+  }
+
+  if ($MessageChannel) {
+    channel = new $MessageChannel();
+    buffer = new $ArrayBuffer(2);
+
+    $detach = function (transferable) {
+      channel.port1.postMessage(null, [transferable]);
+    };
+
+    if (buffer.byteLength === 2) {
+      $detach(buffer);
+      if (buffer.byteLength === 0) detach = $detach;
+    }
+  }
+} catch (error) { /* empty */ }
+
+module.exports = detach;
 
 
 /***/ }),
@@ -7385,7 +7440,7 @@ var uncurryThis = __nccwpck_require__(68610);
 var $Error = Error;
 var replace = uncurryThis(''.replace);
 
-var TEST = (function (arg) { return String($Error(arg).stack); })('zxcasd');
+var TEST = (function (arg) { return String(new $Error(arg).stack); })('zxcasd');
 // eslint-disable-next-line redos/no-vulnerable -- safe
 var V8_OR_CHAKRA_STACK_ENTRY = /\n\s*at [^:]*:[^\n]*/;
 var IS_V8_OR_CHAKRA_STACK = V8_OR_CHAKRA_STACK_ENTRY.test(TEST);
@@ -7430,7 +7485,7 @@ var fails = __nccwpck_require__(64222);
 var createPropertyDescriptor = __nccwpck_require__(29607);
 
 module.exports = !fails(function () {
-  var error = Error('a');
+  var error = new Error('a');
   if (!('stack' in error)) return true;
   // eslint-disable-next-line es/no-object-defineproperty -- safe
   Object.defineProperty(error, 'stack', createPropertyDescriptor(1, 7));
@@ -8069,7 +8124,7 @@ var $TypeError = TypeError;
 module.exports = function (argument, usingIterator) {
   var iteratorMethod = arguments.length < 2 ? getIteratorMethod(argument) : usingIterator;
   if (aCallable(iteratorMethod)) return anObject(call(iteratorMethod, argument));
-  throw $TypeError(tryToString(argument) + ' is not iterable');
+  throw new $TypeError(tryToString(argument) + ' is not iterable');
 };
 
 
@@ -8170,9 +8225,9 @@ module.exports = function (obj) {
   var numSize = +obj.size;
   // NOTE: If size is undefined, then numSize will be NaN
   // eslint-disable-next-line no-self-compare -- NaN check
-  if (numSize !== numSize) throw $TypeError(INVALID_SIZE);
+  if (numSize !== numSize) throw new $TypeError(INVALID_SIZE);
   var intSize = toIntegerOrInfinity(numSize);
-  if (intSize < 0) throw $RangeError(INVALID_SIZE);
+  if (intSize < 0) throw new $RangeError(INVALID_SIZE);
   return new SetRecord(
     obj,
     max(intSize, 0),
@@ -8339,14 +8394,11 @@ module.exports = !DESCRIPTORS && !fails(function () {
 /***/ }),
 
 /***/ 30309:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ ((module) => {
 
 "use strict";
 
 // IEEE754 conversions based on https://github.com/feross/ieee754
-var sign = __nccwpck_require__(23335);
-var trunc = __nccwpck_require__(79378);
-
 var $Array = Array;
 var abs = Math.abs;
 var pow = Math.pow;
@@ -8354,21 +8406,13 @@ var floor = Math.floor;
 var log = Math.log;
 var LN2 = Math.LN2;
 
-var roundToEven = function (number) {
-  var truncated = trunc(number);
-  var delta = abs(number - truncated);
-  if (delta > 0.5 || delta === 0.5 && truncated % 2 !== 0) {
-    return truncated + sign(number);
-  } return truncated;
-};
-
 var pack = function (number, mantissaLength, bytes) {
   var buffer = $Array(bytes);
   var exponentLength = bytes * 8 - mantissaLength - 1;
   var eMax = (1 << exponentLength) - 1;
   var eBias = eMax >> 1;
   var rt = mantissaLength === 23 ? pow(2, -24) - pow(2, -77) : 0;
-  var s = number < 0 || number === 0 && 1 / number < 0 ? 1 : 0;
+  var sign = number < 0 || number === 0 && 1 / number < 0 ? 1 : 0;
   var index = 0;
   var exponent, mantissa, c;
   number = abs(number);
@@ -8397,10 +8441,10 @@ var pack = function (number, mantissaLength, bytes) {
       mantissa = 0;
       exponent = eMax;
     } else if (exponent + eBias >= 1) {
-      mantissa = roundToEven((number * c - 1) * pow(2, mantissaLength));
+      mantissa = (number * c - 1) * pow(2, mantissaLength);
       exponent += eBias;
     } else {
-      mantissa = roundToEven(number * pow(2, eBias - 1) * pow(2, mantissaLength));
+      mantissa = number * pow(2, eBias - 1) * pow(2, mantissaLength);
       exponent = 0;
     }
   }
@@ -8416,7 +8460,7 @@ var pack = function (number, mantissaLength, bytes) {
     exponent /= 256;
     exponentLength -= 8;
   }
-  buffer[--index] |= s * 128;
+  buffer[--index] |= sign * 128;
   return buffer;
 };
 
@@ -8427,10 +8471,10 @@ var unpack = function (buffer, mantissaLength) {
   var eBias = eMax >> 1;
   var nBits = exponentLength - 7;
   var index = bytes - 1;
-  var s = buffer[index--];
-  var exponent = s & 127;
+  var sign = buffer[index--];
+  var exponent = sign & 127;
   var mantissa;
-  s >>= 7;
+  sign >>= 7;
   while (nBits > 0) {
     exponent = exponent * 256 + buffer[index--];
     nBits -= 8;
@@ -8445,11 +8489,11 @@ var unpack = function (buffer, mantissaLength) {
   if (exponent === 0) {
     exponent = 1 - eBias;
   } else if (exponent === eMax) {
-    return mantissa ? NaN : s ? -Infinity : Infinity;
+    return mantissa ? NaN : sign ? -Infinity : Infinity;
   } else {
     mantissa += pow(2, mantissaLength);
     exponent -= eBias;
-  } return (s ? -1 : 1) * mantissa * pow(2, exponent - mantissaLength);
+  } return (sign ? -1 : 1) * mantissa * pow(2, exponent - mantissaLength);
 };
 
 module.exports = {
@@ -8678,7 +8722,7 @@ var getterFor = function (TYPE) {
   return function (it) {
     var state;
     if (!isObject(it) || (state = get(it)).type !== TYPE) {
-      throw TypeError('Incompatible receiver, ' + TYPE + ' required');
+      throw new TypeError('Incompatible receiver, ' + TYPE + ' required');
     } return state;
   };
 };
@@ -8691,7 +8735,7 @@ if (NATIVE_WEAK_MAP || shared.state) {
   store.set = store.set;
   /* eslint-enable no-self-assign -- prototype methods protection */
   set = function (it, metadata) {
-    if (store.has(it)) throw TypeError(OBJECT_ALREADY_INITIALIZED);
+    if (store.has(it)) throw new TypeError(OBJECT_ALREADY_INITIALIZED);
     metadata.facade = it;
     store.set(it, metadata);
     return metadata;
@@ -8706,7 +8750,7 @@ if (NATIVE_WEAK_MAP || shared.state) {
   var STATE = sharedKey('state');
   hiddenKeys[STATE] = true;
   set = function (it, metadata) {
-    if (hasOwn(it, STATE)) throw TypeError(OBJECT_ALREADY_INITIALIZED);
+    if (hasOwn(it, STATE)) throw new TypeError(OBJECT_ALREADY_INITIALIZED);
     metadata.facade = it;
     createNonEnumerableProperty(it, STATE, metadata);
     return metadata;
@@ -8818,7 +8862,7 @@ var empty = [];
 var construct = getBuiltIn('Reflect', 'construct');
 var constructorRegExp = /^\s*(?:class|function)\b/;
 var exec = uncurryThis(constructorRegExp.exec);
-var INCORRECT_TO_STRING = !constructorRegExp.exec(noop);
+var INCORRECT_TO_STRING = !constructorRegExp.test(noop);
 
 var isConstructorModern = function isConstructor(argument) {
   if (!isCallable(argument)) return false;
@@ -9126,7 +9170,7 @@ module.exports = function (iterable, unboundFunction, options) {
     iterator = iterable;
   } else {
     iterFn = getIteratorMethod(iterable);
-    if (!iterFn) throw $TypeError(tryToString(iterable) + ' is not iterable');
+    if (!iterFn) throw new $TypeError(tryToString(iterable) + ' is not iterable');
     // optimisation for array iterators
     if (isArrayIteratorMethod(iterFn)) {
       for (index = 0, length = lengthOfArrayLike(iterable); length > index; index++) {
@@ -9669,7 +9713,7 @@ module.exports = function upsert(key, updateFn /* , insertFn */) {
   var insertFn = arguments.length > 2 ? arguments[2] : undefined;
   var value;
   if (!isCallable(updateFn) && !isCallable(insertFn)) {
-    throw $TypeError('At least one callback required');
+    throw new $TypeError('At least one callback required');
   }
   if (call(has, map, key)) {
     value = call(get, map, key);
@@ -9711,7 +9755,27 @@ module.exports = (!$expm1
 
 /***/ }),
 
-/***/ 16798:
+/***/ 13305:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var floatRound = __nccwpck_require__(81736);
+
+var FLOAT16_EPSILON = 0.0009765625;
+var FLOAT16_MAX_VALUE = 65504;
+var FLOAT16_MIN_VALUE = 6.103515625e-05;
+
+// `Math.f16round` method implementation
+// https://github.com/tc39/proposal-float16array
+module.exports = Math.f16round || function f16round(x) {
+  return floatRound(x, FLOAT16_EPSILON, FLOAT16_MAX_VALUE, FLOAT16_MIN_VALUE);
+};
+
+
+/***/ }),
+
+/***/ 81736:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
@@ -9719,30 +9783,45 @@ module.exports = (!$expm1
 var sign = __nccwpck_require__(23335);
 
 var abs = Math.abs;
-var pow = Math.pow;
-var EPSILON = pow(2, -52);
-var EPSILON32 = pow(2, -23);
-var MAX32 = pow(2, 127) * (2 - EPSILON32);
-var MIN32 = pow(2, -126);
+
+var EPSILON = 2.220446049250313e-16; // Number.EPSILON
+var INVERSE_EPSILON = 1 / EPSILON;
 
 var roundTiesToEven = function (n) {
-  return n + 1 / EPSILON - 1 / EPSILON;
+  return n + INVERSE_EPSILON - INVERSE_EPSILON;
 };
+
+module.exports = function (x, FLOAT_EPSILON, FLOAT_MAX_VALUE, FLOAT_MIN_VALUE) {
+  var n = +x;
+  var absolute = abs(n);
+  var s = sign(n);
+  if (absolute < FLOAT_MIN_VALUE) return s * roundTiesToEven(absolute / FLOAT_MIN_VALUE / FLOAT_EPSILON) * FLOAT_MIN_VALUE * FLOAT_EPSILON;
+  var a = (1 + FLOAT_EPSILON / EPSILON) * absolute;
+  var result = a - (a - absolute);
+  // eslint-disable-next-line no-self-compare -- NaN check
+  if (result > FLOAT_MAX_VALUE || result !== result) return s * Infinity;
+  return s * result;
+};
+
+
+/***/ }),
+
+/***/ 16798:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var floatRound = __nccwpck_require__(81736);
+
+var FLOAT32_EPSILON = 1.1920928955078125e-7; // 2 ** -23;
+var FLOAT32_MAX_VALUE = 3.4028234663852886e+38; // 2 ** 128 - 2 ** 104
+var FLOAT32_MIN_VALUE = 1.1754943508222875e-38; // 2 ** -126;
 
 // `Math.fround` method implementation
 // https://tc39.es/ecma262/#sec-math.fround
 // eslint-disable-next-line es/no-math-fround -- safe
 module.exports = Math.fround || function fround(x) {
-  var n = +x;
-  var $abs = abs(n);
-  var $sign = sign(n);
-  var a, result;
-  if ($abs < MIN32) return $sign * roundTiesToEven($abs / MIN32 / EPSILON32) * MIN32 * EPSILON32;
-  a = (1 + EPSILON32 / EPSILON) * $abs;
-  result = a - (a - $abs);
-  // eslint-disable-next-line no-self-compare -- NaN check
-  if (result > MAX32 || result !== result) return $sign * Infinity;
-  return $sign * result;
+  return floatRound(x, FLOAT32_EPSILON, FLOAT32_MAX_VALUE, FLOAT32_MIN_VALUE);
 };
 
 
@@ -9958,7 +10037,7 @@ var $TypeError = TypeError;
 var PromiseCapability = function (C) {
   var resolve, reject;
   this.promise = new C(function ($$resolve, $$reject) {
-    if (resolve !== undefined || reject !== undefined) throw $TypeError('Bad Promise constructor');
+    if (resolve !== undefined || reject !== undefined) throw new $TypeError('Bad Promise constructor');
     resolve = $$resolve;
     reject = $$reject;
   });
@@ -9999,7 +10078,7 @@ var $RangeError = RangeError;
 module.exports = function (it) {
   // eslint-disable-next-line no-self-compare -- NaN check
   if (it === it) return it;
-  throw $RangeError('NaN is not allowed');
+  throw new $RangeError('NaN is not allowed');
 };
 
 
@@ -10016,7 +10095,7 @@ var $TypeError = TypeError;
 
 module.exports = function (it) {
   if (isRegExp(it)) {
-    throw $TypeError("The method doesn't accept regular expressions");
+    throw new $TypeError("The method doesn't accept regular expressions");
   } return it;
 };
 
@@ -10129,10 +10208,10 @@ var $TypeError = TypeError;
 var $RangeIterator = createIteratorConstructor(function NumericRangeIterator(start, end, option, type, zero, one) {
   // TODO: Drop the first `typeof` check after removing legacy methods in `core-js@4`
   if (typeof start != type || (end !== Infinity && end !== -Infinity && typeof end != type)) {
-    throw $TypeError(INCORRECT_RANGE);
+    throw new $TypeError(INCORRECT_RANGE);
   }
   if (start === Infinity || start === -Infinity) {
-    throw $RangeError(INCORRECT_RANGE);
+    throw new $RangeError(INCORRECT_RANGE);
   }
   var ifIncrease = end > start;
   var inclusiveEnd = false;
@@ -10145,16 +10224,16 @@ var $RangeIterator = createIteratorConstructor(function NumericRangeIterator(sta
   } else if (typeof option == type) {
     step = option;
   } else {
-    throw $TypeError(INCORRECT_RANGE);
+    throw new $TypeError(INCORRECT_RANGE);
   }
   if (isNullOrUndefined(step)) {
     step = ifIncrease ? one : -one;
   }
   if (typeof step != type) {
-    throw $TypeError(INCORRECT_RANGE);
+    throw new $TypeError(INCORRECT_RANGE);
   }
   if (step === Infinity || step === -Infinity || (step === zero && start !== end)) {
-    throw $RangeError(INCORRECT_RANGE);
+    throw new $RangeError(INCORRECT_RANGE);
   }
   // eslint-disable-next-line no-self-compare -- NaN check
   var hitsEnd = start !== start || end !== end || step !== step || (end > start) !== (step > zero);
@@ -10448,7 +10527,7 @@ exports.f = DESCRIPTORS ? V8_PROTOTYPE_DEFINE_BUG ? function defineProperty(O, P
   if (IE8_DOM_DEFINE) try {
     return $defineProperty(O, P, Attributes);
   } catch (error) { /* empty */ }
-  if ('get' in Attributes || 'set' in Attributes) throw $TypeError('Accessors not supported');
+  if ('get' in Attributes || 'set' in Attributes) throw new $TypeError('Accessors not supported');
   if ('value' in Attributes) O[P] = Attributes.value;
   return O;
 };
@@ -10866,28 +10945,6 @@ module.exports = TO_STRING_TAG_SUPPORT ? {}.toString : function toString() {
 
 /***/ }),
 
-/***/ 19853:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-var global = __nccwpck_require__(31157);
-var isCallable = __nccwpck_require__(63774);
-var wellKnownSymbol = __nccwpck_require__(48322);
-
-var $$OBSERVABLE = wellKnownSymbol('observable');
-var NativeObservable = global.Observable;
-var NativeObservablePrototype = NativeObservable && NativeObservable.prototype;
-
-module.exports = !isCallable(NativeObservable)
-  || !isCallable(NativeObservable.from)
-  || !isCallable(NativeObservable.of)
-  || !isCallable(NativeObservablePrototype.subscribe)
-  || !isCallable(NativeObservablePrototype[$$OBSERVABLE]);
-
-
-/***/ }),
-
 /***/ 77438:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -10906,7 +10963,7 @@ module.exports = function (input, pref) {
   if (pref === 'string' && isCallable(fn = input.toString) && !isObject(val = call(fn, input))) return val;
   if (isCallable(fn = input.valueOf) && !isObject(val = call(fn, input))) return val;
   if (pref !== 'string' && isCallable(fn = input.toString) && !isObject(val = call(fn, input))) return val;
-  throw $TypeError("Can't convert object to primitive value");
+  throw new $TypeError("Can't convert object to primitive value");
 };
 
 
@@ -10978,21 +11035,21 @@ module.exports = function (source, i) {
       } else if (twoChars === '\\u') {
         i += 2;
         var fourHexDigits = slice(source, i, i + 4);
-        if (!exec(IS_4_HEX_DIGITS, fourHexDigits)) throw $SyntaxError('Bad Unicode escape at: ' + i);
+        if (!exec(IS_4_HEX_DIGITS, fourHexDigits)) throw new $SyntaxError('Bad Unicode escape at: ' + i);
         value += fromCharCode($parseInt(fourHexDigits, 16));
         i += 4;
-      } else throw $SyntaxError('Unknown escape sequence: "' + twoChars + '"');
+      } else throw new $SyntaxError('Unknown escape sequence: "' + twoChars + '"');
     } else if (chr === '"') {
       unterminated = false;
       i++;
       break;
     } else {
-      if (exec(IS_C0_CONTROL_CODE, chr)) throw $SyntaxError('Bad control character in string literal at: ' + i);
+      if (exec(IS_C0_CONTROL_CODE, chr)) throw new $SyntaxError('Bad control character in string literal at: ' + i);
       value += chr;
       i++;
     }
   }
-  if (unterminated) throw $SyntaxError('Unterminated string at: ' + i);
+  if (unterminated) throw new $SyntaxError('Unterminated string at: ' + i);
   return { value: value, end: i };
 };
 
@@ -11276,7 +11333,7 @@ module.exports = function (R, S) {
     return result;
   }
   if (classof(R) === 'RegExp') return call(regexpExec, R, S);
-  throw $TypeError('RegExp#exec called on incompatible receiver');
+  throw new $TypeError('RegExp#exec called on incompatible receiver');
 };
 
 
@@ -11506,7 +11563,7 @@ var $RegExp = global.RegExp;
 
 module.exports = fails(function () {
   var re = $RegExp('.', 's');
-  return !(re.dotAll && re.exec('\n') && re.flags === 's');
+  return !(re.dotAll && re.test('\n') && re.flags === 's');
 });
 
 
@@ -11544,7 +11601,7 @@ var $TypeError = TypeError;
 // `RequireObjectCoercible` abstract operation
 // https://tc39.es/ecma262/#sec-requireobjectcoercible
 module.exports = function (it) {
-  if (isNullOrUndefined(it)) throw $TypeError("Can't call method on " + it);
+  if (isNullOrUndefined(it)) throw new $TypeError("Can't call method on " + it);
   return it;
 };
 
@@ -12047,10 +12104,10 @@ var store = __nccwpck_require__(96091);
 (module.exports = function (key, value) {
   return store[key] || (store[key] = value !== undefined ? value : {});
 })('versions', []).push({
-  version: '3.32.2',
+  version: '3.33.0',
   mode: IS_PURE ? 'pure' : 'global',
   copyright: '© 2014-2023 Denis Pushkarev (zloirock.ru)',
-  license: 'https://github.com/zloirock/core-js/blob/v3.32.2/LICENSE',
+  license: 'https://github.com/zloirock/core-js/blob/v3.33.0/LICENSE',
   source: 'https://github.com/zloirock/core-js'
 });
 
@@ -12105,7 +12162,7 @@ module.exports = function cooked(template /* , ...substitutions */) {
   var i = 0;
   while (true) {
     var nextVal = cookedTemplate[i++];
-    if (nextVal === undefined) throw $TypeError('Incorrect template');
+    if (nextVal === undefined) throw new $TypeError('Incorrect template');
     push(elements, toString(nextVal));
     if (i === literalSegments) return join(elements, '');
     if (i < argumentsLength) push(elements, toString(arguments[i]));
@@ -12500,7 +12557,7 @@ var encode = function (input) {
     // Increase `delta` enough to advance the decoder's <n,i> state to <m,0>, but guard against overflow.
     var handledCPCountPlusOne = handledCPCount + 1;
     if (m - n > floor((maxInt - delta) / handledCPCountPlusOne)) {
-      throw $RangeError(OVERFLOW_ERROR);
+      throw new $RangeError(OVERFLOW_ERROR);
     }
 
     delta += (m - n) * handledCPCountPlusOne;
@@ -12509,7 +12566,7 @@ var encode = function (input) {
     for (i = 0; i < input.length; i++) {
       currentValue = input[i];
       if (currentValue < n && ++delta > maxInt) {
-        throw $RangeError(OVERFLOW_ERROR);
+        throw new $RangeError(OVERFLOW_ERROR);
       }
       if (currentValue === n) {
         // Represent delta as a generalized variable-length integer.
@@ -12569,7 +12626,7 @@ module.exports = function repeat(count) {
   var str = toString(requireObjectCoercible(this));
   var result = '';
   var n = toIntegerOrInfinity(count);
-  if (n < 0 || n === Infinity) throw $RangeError('Wrong number of repetitions');
+  if (n < 0 || n === Infinity) throw new $RangeError('Wrong number of repetitions');
   for (;n > 0; (n >>>= 1) && (str += str)) if (n & 1) result += str;
   return result;
 };
@@ -13014,7 +13071,7 @@ var $TypeError = TypeError;
 // https://tc39.es/ecma262/#sec-tobigint
 module.exports = function (argument) {
   var prim = toPrimitive(argument, 'number');
-  if (typeof prim == 'number') throw $TypeError("Can't convert number to bigint");
+  if (typeof prim == 'number') throw new $TypeError("Can't convert number to bigint");
   // eslint-disable-next-line es/no-bigint -- safe
   return BigInt(prim);
 };
@@ -13038,7 +13095,7 @@ module.exports = function (it) {
   if (it === undefined) return 0;
   var number = toIntegerOrInfinity(it);
   var length = toLength(number);
-  if (number !== length) throw $RangeError('Wrong length or index');
+  if (number !== length) throw new $RangeError('Wrong length or index');
   return length;
 };
 
@@ -13126,7 +13183,7 @@ var $RangeError = RangeError;
 
 module.exports = function (it, BYTES) {
   var offset = toPositiveInteger(it);
-  if (offset % BYTES) throw $RangeError('Wrong offset');
+  if (offset % BYTES) throw new $RangeError('Wrong offset');
   return offset;
 };
 
@@ -13144,7 +13201,7 @@ var $RangeError = RangeError;
 
 module.exports = function (it) {
   var result = toIntegerOrInfinity(it);
-  if (result < 0) throw $RangeError("The argument can't be less than 0");
+  if (result < 0) throw new $RangeError("The argument can't be less than 0");
   return result;
 };
 
@@ -13176,7 +13233,7 @@ module.exports = function (input, pref) {
     if (pref === undefined) pref = 'default';
     result = call(exoticToPrim, input, pref);
     if (!isObject(result) || isSymbol(result)) return result;
-    throw $TypeError("Can't convert object to primitive value");
+    throw new $TypeError("Can't convert object to primitive value");
   }
   if (pref === undefined) pref = 'number';
   return ordinaryToPrimitive(input, pref);
@@ -13258,7 +13315,7 @@ var classof = __nccwpck_require__(78765);
 var $String = String;
 
 module.exports = function (argument) {
-  if (classof(argument) === 'Symbol') throw TypeError('Cannot convert a Symbol value to a string');
+  if (classof(argument) === 'Symbol') throw new TypeError('Cannot convert a Symbol value to a string');
   return $String(argument);
 };
 
@@ -13488,12 +13545,12 @@ if (DESCRIPTORS) {
           byteOffset = toOffset(offset, BYTES);
           var $len = data.byteLength;
           if ($length === undefined) {
-            if ($len % BYTES) throw RangeError(WRONG_LENGTH);
+            if ($len % BYTES) throw new RangeError(WRONG_LENGTH);
             byteLength = $len - byteOffset;
-            if (byteLength < 0) throw RangeError(WRONG_LENGTH);
+            if (byteLength < 0) throw new RangeError(WRONG_LENGTH);
           } else {
             byteLength = toLength($length) * BYTES;
-            if (byteLength + byteOffset > $len) throw RangeError(WRONG_LENGTH);
+            if (byteLength + byteOffset > $len) throw new RangeError(WRONG_LENGTH);
           }
           length = byteLength / BYTES;
         } else if (isTypedArray(data)) {
@@ -13796,7 +13853,7 @@ module.exports = DESCRIPTORS && fails(function () {
 var $TypeError = TypeError;
 
 module.exports = function (passed, required) {
-  if (passed < required) throw $TypeError('Not enough arguments');
+  if (passed < required) throw new $TypeError('Not enough arguments');
   return passed;
 };
 
@@ -14063,7 +14120,7 @@ var $AggregateError = function AggregateError(errors, message /* , options */) {
   var isInstance = isPrototypeOf(AggregateErrorPrototype, this);
   var that;
   if (setPrototypeOf) {
-    that = setPrototypeOf($Error(), isInstance ? getPrototypeOf(this) : AggregateErrorPrototype);
+    that = setPrototypeOf(new $Error(), isInstance ? getPrototypeOf(this) : AggregateErrorPrototype);
   } else {
     that = isInstance ? this : create(AggregateErrorPrototype);
     createNonEnumerableProperty(that, TO_STRING_TAG, 'Error');
@@ -15696,7 +15753,8 @@ var wrapErrorConstructorWithCause = __nccwpck_require__(80629);
 var WEB_ASSEMBLY = 'WebAssembly';
 var WebAssembly = global[WEB_ASSEMBLY];
 
-var FORCED = Error('e', { cause: 7 }).cause !== 7;
+// eslint-disable-next-line es/no-error-cause -- feature detection
+var FORCED = new Error('e', { cause: 7 }).cause !== 7;
 
 var exportGlobalErrorCauseWrapper = function (ERROR_NAME, wrapper) {
   var O = {};
@@ -16511,7 +16569,7 @@ var toNumeric = function (value) {
 var toNumber = function (argument) {
   var it = toPrimitive(argument, 'number');
   var first, third, radix, maxCode, digits, length, index, code;
-  if (isSymbol(it)) throw TypeError('Cannot convert a Symbol value to a number');
+  if (isSymbol(it)) throw new TypeError('Cannot convert a Symbol value to a number');
   if (typeof it == 'string' && it.length > 2) {
     it = trim(it);
     first = charCodeAt(it, 0);
@@ -16807,7 +16865,7 @@ $({ target: 'Number', proto: true, forced: FORCED }, {
     var f = toIntegerOrInfinity(fractionDigits);
     if (!$isFinite(x)) return String(x);
     // TODO: ES2018 increased the maximum number of fraction digits to 100, need to improve the implementation
-    if (f < 0 || f > 20) throw $RangeError('Incorrect fraction digits');
+    if (f < 0 || f > 20) throw new $RangeError('Incorrect fraction digits');
     if (ROUNDS_PROPERLY) return nativeToExponential(x, f);
     var s = '';
     var m = '';
@@ -16945,7 +17003,7 @@ $({ target: 'Number', proto: true, forced: FORCED }, {
     var e, z, j, k;
 
     // TODO: ES2018 increased the maximum number of fraction digits to 100, need to improve the implementation
-    if (fractDigits < 0 || fractDigits > 20) throw $RangeError('Incorrect fraction digits');
+    if (fractDigits < 0 || fractDigits > 20) throw new $RangeError('Incorrect fraction digits');
     // eslint-disable-next-line no-self-compare -- NaN check
     if (number !== number) return 'NaN';
     if (number <= -1e21 || number >= 1e21) return $String(number);
@@ -17998,7 +18056,7 @@ var callReaction = function (reaction, state) {
         }
       }
       if (result === reaction.promise) {
-        reject(TypeError('Promise-chain cycle'));
+        reject(new TypeError('Promise-chain cycle'));
       } else if (then = isThenable(result)) {
         call(then, result, resolve, reject);
       } else resolve(result);
@@ -18088,7 +18146,7 @@ var internalResolve = function (state, value, unwrap) {
   state.done = true;
   if (unwrap) state = unwrap;
   try {
-    if (state.facade === value) throw TypeError("Promise can't be resolved itself");
+    if (state.facade === value) throw new TypeError("Promise can't be resolved itself");
     var then = isThenable(value);
     if (then) {
       microtask(function () {
@@ -18998,7 +19056,7 @@ if (DESCRIPTORS && UNSUPPORTED_DOT_ALL) {
       if (classof(this) === 'RegExp') {
         return !!getInternalState(this).dotAll;
       }
-      throw $TypeError('Incompatible receiver, RegExp required');
+      throw new $TypeError('Incompatible receiver, RegExp required');
     }
   });
 }
@@ -19113,7 +19171,7 @@ if (DESCRIPTORS && MISSED_STICKY) {
       if (classof(this) === 'RegExp') {
         return !!getInternalState(this).sticky;
       }
-      throw $TypeError('Incompatible receiver, RegExp required');
+      throw new $TypeError('Incompatible receiver, RegExp required');
     }
   });
 }
@@ -19494,7 +19552,7 @@ $({ target: 'String', stat: true, arity: 1, forced: INCORRECT_LENGTH }, {
     var code;
     while (length > i) {
       code = +arguments[i++];
-      if (toAbsoluteIndex(code, 0x10FFFF) !== code) throw $RangeError(code + ' is not a valid code point');
+      if (toAbsoluteIndex(code, 0x10FFFF) !== code) throw new $RangeError(code + ' is not a valid code point');
       elements[i] = code < 0x10000
         ? fromCharCode(code)
         : fromCharCode(((code -= 0x10000) >> 10) + 0xD800, code % 0x400 + 0xDC00);
@@ -19736,7 +19794,7 @@ $({ target: 'String', proto: true, forced: WORKS_WITH_NON_GLOBAL_REGEX }, {
     if (!isNullOrUndefined(regexp)) {
       if (isRegExp(regexp)) {
         flags = toString(requireObjectCoercible(getRegExpFlags(regexp)));
-        if (!~stringIndexOf(flags, 'g')) throw $TypeError('`.matchAll` does not allow non-global regexes');
+        if (!~stringIndexOf(flags, 'g')) throw new $TypeError('`.matchAll` does not allow non-global regexes');
       }
       if (WORKS_WITH_NON_GLOBAL_REGEX) return nativeMatchAll(O, regexp);
       matcher = getMethod(regexp, MATCH_ALL);
@@ -19948,7 +20006,7 @@ $({ target: 'String', proto: true }, {
       IS_REG_EXP = isRegExp(searchValue);
       if (IS_REG_EXP) {
         flags = toString(requireObjectCoercible(getRegExpFlags(searchValue)));
-        if (!~indexOf(flags, 'g')) throw $TypeError('`.replaceAll` does not allow non-global regexes');
+        if (!~indexOf(flags, 'g')) throw new $TypeError('`.replaceAll` does not allow non-global regexes');
       }
       replacer = getMethod(searchValue, REPLACE);
       if (replacer) {
@@ -20719,6 +20777,7 @@ var getInternalState = InternalStateModule.getterFor(SYMBOL);
 var ObjectPrototype = Object[PROTOTYPE];
 var $Symbol = global.Symbol;
 var SymbolPrototype = $Symbol && $Symbol[PROTOTYPE];
+var RangeError = global.RangeError;
 var TypeError = global.TypeError;
 var QObject = global.QObject;
 var nativeGetOwnPropertyDescriptor = getOwnPropertyDescriptorModule.f;
@@ -20735,18 +20794,20 @@ var WellKnownSymbolsStore = shared('wks');
 var USE_SETTER = !QObject || !QObject[PROTOTYPE] || !QObject[PROTOTYPE].findChild;
 
 // fallback for old Android, https://code.google.com/p/v8/issues/detail?id=687
-var setSymbolDescriptor = DESCRIPTORS && fails(function () {
-  return nativeObjectCreate(nativeDefineProperty({}, 'a', {
-    get: function () { return nativeDefineProperty(this, 'a', { value: 7 }).a; }
-  })).a !== 7;
-}) ? function (O, P, Attributes) {
+var fallbackDefineProperty = function (O, P, Attributes) {
   var ObjectPrototypeDescriptor = nativeGetOwnPropertyDescriptor(ObjectPrototype, P);
   if (ObjectPrototypeDescriptor) delete ObjectPrototype[P];
   nativeDefineProperty(O, P, Attributes);
   if (ObjectPrototypeDescriptor && O !== ObjectPrototype) {
     nativeDefineProperty(ObjectPrototype, P, ObjectPrototypeDescriptor);
   }
-} : nativeDefineProperty;
+};
+
+var setSymbolDescriptor = DESCRIPTORS && fails(function () {
+  return nativeObjectCreate(nativeDefineProperty({}, 'a', {
+    get: function () { return nativeDefineProperty(this, 'a', { value: 7 }).a; }
+  })).a !== 7;
+}) ? fallbackDefineProperty : nativeDefineProperty;
 
 var wrap = function (tag, description) {
   var symbol = AllSymbols[tag] = nativeObjectCreate(SymbolPrototype);
@@ -20833,13 +20894,19 @@ var $getOwnPropertySymbols = function (O) {
 // https://tc39.es/ecma262/#sec-symbol-constructor
 if (!NATIVE_SYMBOL) {
   $Symbol = function Symbol() {
-    if (isPrototypeOf(SymbolPrototype, this)) throw TypeError('Symbol is not a constructor');
+    if (isPrototypeOf(SymbolPrototype, this)) throw new TypeError('Symbol is not a constructor');
     var description = !arguments.length || arguments[0] === undefined ? undefined : $toString(arguments[0]);
     var tag = uid(description);
     var setter = function (value) {
       if (this === ObjectPrototype) call(setter, ObjectPrototypeSymbols, value);
       if (hasOwn(this, HIDDEN) && hasOwn(this[HIDDEN], tag)) this[HIDDEN][tag] = false;
-      setSymbolDescriptor(this, tag, createPropertyDescriptor(1, value));
+      var descriptor = createPropertyDescriptor(1, value);
+      try {
+        setSymbolDescriptor(this, tag, descriptor);
+      } catch (error) {
+        if (!(error instanceof RangeError)) throw error;
+        fallbackDefineProperty(this, tag, descriptor);
+      }
     };
     if (DESCRIPTORS && USE_SETTER) setSymbolDescriptor(ObjectPrototype, tag, { configurable: true, set: setter });
     return wrap(tag, description);
@@ -21100,7 +21167,7 @@ var SymbolToStringRegistry = shared('symbol-to-string-registry');
 // https://tc39.es/ecma262/#sec-symbol.keyfor
 $({ target: 'Symbol', stat: true, forced: !NATIVE_SYMBOL_REGISTRY }, {
   keyFor: function keyFor(sym) {
-    if (!isSymbol(sym)) throw TypeError(tryToString(sym) + ' is not a symbol');
+    if (!isSymbol(sym)) throw new TypeError(tryToString(sym) + ' is not a symbol');
     if (hasOwn(SymbolToStringRegistry, sym)) return SymbolToStringRegistry[sym];
   }
 });
@@ -21877,7 +21944,7 @@ exportTypedArrayMethod('set', function set(arrayLike /* , offset */) {
   var length = this.length;
   var len = lengthOfArrayLike(src);
   var index = 0;
-  if (len + offset > length) throw RangeError('Wrong length');
+  if (len + offset > length) throw new RangeError('Wrong length');
   while (index < len) this[offset + index] = src[index++];
 }, !WORKS_WITH_OBJECTS_AND_GENERIC_ON_TYPED_ARRAYS || TO_OBJECT_BUG);
 
@@ -22944,7 +23011,7 @@ var PENDING = 'pending';
 
 var getPendingAsyncDisposableStackInternalState = function (stack) {
   var internalState = getAsyncDisposableStackInternalState(stack);
-  if (internalState.state === DISPOSED) throw $ReferenceError(ASYNC_DISPOSABLE_STACK + ' already disposed');
+  if (internalState.state === DISPOSED) throw new $ReferenceError(ASYNC_DISPOSABLE_STACK + ' already disposed');
   return internalState;
 };
 
@@ -23119,7 +23186,7 @@ var $TypeError = TypeError;
 
 var AsyncIteratorConstructor = function AsyncIterator() {
   anInstance(this, AsyncIteratorPrototype);
-  if (getPrototypeOf(this) === AsyncIteratorPrototype) throw $TypeError('Abstract class AsyncIterator not directly constructable');
+  if (getPrototypeOf(this) === AsyncIteratorPrototype) throw new $TypeError('Abstract class AsyncIterator not directly constructable');
 };
 
 AsyncIteratorConstructor.prototype = AsyncIteratorPrototype;
@@ -23532,7 +23599,7 @@ $({ target: 'AsyncIterator', proto: true, real: true }, {
           Promise.resolve(anObject(call(next, iterator))).then(function (step) {
             try {
               if (anObject(step).done) {
-                noInitial ? reject($TypeError('Reduce of empty iterator with no initial value')) : resolve(accumulator);
+                noInitial ? reject(new $TypeError('Reduce of empty iterator with no initial value')) : resolve(accumulator);
               } else {
                 var value = step.value;
                 if (noInitial) {
@@ -23787,6 +23854,7 @@ var uncurryThis = __nccwpck_require__(68610);
 var classof = __nccwpck_require__(78765);
 var toIndex = __nccwpck_require__(37017);
 var packIEEE754 = (__nccwpck_require__(30309).pack);
+var f16round = __nccwpck_require__(13305);
 
 var $TypeError = TypeError;
 // eslint-disable-next-line es/no-typed-arrays -- safe
@@ -23796,9 +23864,9 @@ var setUint16 = uncurryThis(DataView.prototype.setUint16);
 // https://github.com/tc39/proposal-float16array
 $({ target: 'DataView', proto: true }, {
   setFloat16: function setFloat16(byteOffset, value /* , littleEndian */) {
-    if (classof(this) !== 'DataView') throw $TypeError('Incorrect receiver');
+    if (classof(this) !== 'DataView') throw new $TypeError('Incorrect receiver');
     var offset = toIndex(byteOffset);
-    var bytes = packIEEE754(+value, 10, 2);
+    var bytes = packIEEE754(f16round(value), 10, 2);
     return setUint16(this, offset, bytes[1] << 8 | bytes[0], arguments.length > 2 ? arguments[2] : false);
   }
 });
@@ -23825,7 +23893,7 @@ var setUint8 = uncurryThis(DataView.prototype.setUint8);
 // https://github.com/tc39/proposal-dataview-get-set-uint8c
 $({ target: 'DataView', proto: true, forced: true }, {
   setUint8Clamped: function setUint8Clamped(byteOffset, value) {
-    if (classof(this) !== 'DataView') throw $TypeError('Incorrect receiver');
+    if (classof(this) !== 'DataView') throw new $TypeError('Incorrect receiver');
     var offset = toIndex(byteOffset);
     return setUint8(this, offset, toUint8Clamped(value));
   }
@@ -23868,7 +23936,7 @@ var PENDING = 'pending';
 
 var getPendingDisposableStackInternalState = function (stack) {
   var internalState = getDisposableStackInternalState(stack);
-  if (internalState.state === DISPOSED) throw $ReferenceError(DISPOSABLE_STACK + ' already disposed');
+  if (internalState.state === DISPOSED) throw new $ReferenceError(DISPOSABLE_STACK + ' already disposed');
   return internalState;
 };
 
@@ -24128,7 +24196,7 @@ var FORCED = IS_PURE
 
 var IteratorConstructor = function Iterator() {
   anInstance(this, IteratorPrototype);
-  if (getPrototypeOf(this) === IteratorPrototype) throw $TypeError('Abstract class Iterator not directly constructable');
+  if (getPrototypeOf(this) === IteratorPrototype) throw new $TypeError('Abstract class Iterator not directly constructable');
 };
 
 if (!hasOwn(IteratorPrototype, TO_STRING_TAG)) {
@@ -24484,7 +24552,7 @@ $({ target: 'Iterator', stat: true, forced: true }, {
   range: function range(start, end, option) {
     if (typeof start == 'number') return new NumericRangeIterator(start, end, option, 'number', 0, 1);
     if (typeof start == 'bigint') return new NumericRangeIterator(start, end, option, 'bigint', BigInt(0), BigInt(1));
-    throw $TypeError('Incorrect Iterator.range arguments');
+    throw new $TypeError('Incorrect Iterator.range arguments');
   }
 });
 
@@ -24523,7 +24591,7 @@ $({ target: 'Iterator', proto: true, real: true }, {
       }
       counter++;
     }, { IS_RECORD: true });
-    if (noInitial) throw $TypeError('Reduce of empty iterator with no initial value');
+    if (noInitial) throw new $TypeError('Reduce of empty iterator with no initial value');
     return accumulator;
   }
 });
@@ -24716,7 +24784,7 @@ var $parse = function (source, reviver) {
   var value = root.value;
   var endIndex = context.skip(IS_WHITESPACE, root.end);
   if (endIndex < source.length) {
-    throw SyntaxError('Unexpected extra character: "' + at(source, endIndex) + '" after the parsed data at: ' + endIndex);
+    throw new SyntaxError('Unexpected extra character: "' + at(source, endIndex) + '" after the parsed data at: ' + endIndex);
   }
   return isCallable(reviver) ? internalize({ '': value }, '', reviver, root) : value;
 };
@@ -24792,7 +24860,7 @@ Context.prototype = {
         return fork.keyword(false);
       case 'n':
         return fork.keyword(null);
-    } throw SyntaxError('Unexpected character: "' + chr + '" at: ' + i);
+    } throw new SyntaxError('Unexpected character: "' + chr + '" at: ' + i);
   },
   node: function (type, value, start, end, nodes) {
     return new Node(value, end, type ? null : slice(this.source, start, end), nodes);
@@ -24869,14 +24937,14 @@ Context.prototype = {
     if (at(source, i) === '-') i++;
     if (at(source, i) === '0') i++;
     else if (exec(IS_NON_ZERO_DIGIT, at(source, i))) i = this.skip(IS_DIGIT, ++i);
-    else throw SyntaxError('Failed to parse number at: ' + i);
+    else throw new SyntaxError('Failed to parse number at: ' + i);
     if (at(source, i) === '.') i = this.skip(IS_DIGIT, ++i);
     if (at(source, i) === 'e' || at(source, i) === 'E') {
       i++;
       if (at(source, i) === '+' || at(source, i) === '-') i++;
       var exponentStartIndex = i;
       i = this.skip(IS_DIGIT, i);
-      if (exponentStartIndex === i) throw SyntaxError("Failed to parse number's exponent value at: " + i);
+      if (exponentStartIndex === i) throw new SyntaxError("Failed to parse number's exponent value at: " + i);
     }
     return this.node(PRIMITIVE, Number(slice(source, startIndex, i)), startIndex, i);
   },
@@ -24884,7 +24952,7 @@ Context.prototype = {
     var keyword = '' + value;
     var index = this.index;
     var endIndex = index + keyword.length;
-    if (slice(this.source, index, endIndex) !== keyword) throw SyntaxError('Failed to parse value at: ' + index);
+    if (slice(this.source, index, endIndex) !== keyword) throw new SyntaxError('Failed to parse value at: ' + index);
     return this.node(PRIMITIVE, value, index, endIndex);
   },
   skip: function (regex, i) {
@@ -24896,7 +24964,7 @@ Context.prototype = {
     i = this.skip(IS_WHITESPACE, i);
     var chr = at(this.source, i);
     for (var j = 0; j < array.length; j++) if (array[j] === chr) return i;
-    throw SyntaxError('Unexpected character: "' + chr + '" at: ' + i);
+    throw new SyntaxError('Unexpected character: "' + chr + '" at: ' + i);
   }
 };
 
@@ -24969,10 +25037,10 @@ $({ target: 'JSON', stat: true, forced: !NATIVE_RAW_JSON }, {
   rawJSON: function rawJSON(text) {
     var jsonString = toString(text);
     if (jsonString === '' || exec(IS_WHITESPACE, at(jsonString, 0)) || exec(IS_WHITESPACE, at(jsonString, jsonString.length - 1))) {
-      throw $SyntaxError(ERROR_MESSAGE);
+      throw new $SyntaxError(ERROR_MESSAGE);
     }
     var parsed = parse(jsonString);
-    if (typeof parsed == 'object' && parsed !== null) throw $SyntaxError(ERROR_MESSAGE);
+    if (typeof parsed == 'object' && parsed !== null) throw new $SyntaxError(ERROR_MESSAGE);
     var obj = create(null);
     setInternalState(obj, { type: 'RawJSON' });
     createProperty(obj, 'rawJSON', jsonString);
@@ -25456,7 +25524,7 @@ $({ target: 'Map', proto: true, real: true, forced: true }, {
         accumulator = callbackfn(accumulator, value, key, map);
       }
     });
-    if (noInitial) throw $TypeError('Reduce of empty map with no initial value');
+    if (noInitial) throw new $TypeError('Reduce of empty map with no initial value');
     return accumulator;
   }
 });
@@ -25531,7 +25599,7 @@ $({ target: 'Map', proto: true, real: true, forced: true }, {
     aCallable(callback);
     var isPresentInMap = has(map, key);
     if (!isPresentInMap && length < 3) {
-      throw $TypeError('Updating absent value');
+      throw new $TypeError('Updating absent value');
     }
     var value = isPresentInMap ? get(map, key) : aCallable(length > 2 ? arguments[2] : undefined)(key, map);
     set(map, key, callback(value, key, map));
@@ -25623,20 +25691,11 @@ $({ target: 'Math', stat: true, forced: true }, {
 "use strict";
 
 var $ = __nccwpck_require__(2374);
-var IEEE754 = __nccwpck_require__(30309);
-
-var packIEEE754 = IEEE754.pack;
-var unpackIEEE754 = IEEE754.unpack;
-var $isFinite = isFinite;
+var f16round = __nccwpck_require__(13305);
 
 // `Math.f16round` method
 // https://github.com/tc39/proposal-float16array
-$({ target: 'Math', stat: true }, {
-  f16round: function f16round(x) {
-    var n = +x;
-    return $isFinite(n) && n !== 0 ? unpackIEEE754(packIEEE754(n, 10, 2), 10) : n;
-  }
-});
+$({ target: 'Math', stat: true }, { f16round: f16round });
 
 
 /***/ }),
@@ -25822,7 +25881,7 @@ var $SeededRandomGenerator = createIteratorConstructor(function SeededRandomGene
 $({ target: 'Math', stat: true, forced: true }, {
   seededPRNG: function seededPRNG(it) {
     var seed = anObject(it).seed;
-    if (!numberIsFinite(seed)) throw $TypeError(SEED_TYPE_ERROR);
+    if (!numberIsFinite(seed)) throw new $TypeError(SEED_TYPE_ERROR);
     return new $SeededRandomGenerator(seed);
   }
 });
@@ -25904,17 +25963,17 @@ $({ target: 'Number', stat: true, forced: true }, {
   fromString: function fromString(string, radix) {
     var sign = 1;
     var R, mathNum;
-    if (typeof string != 'string') throw $TypeError(INVALID_NUMBER_REPRESENTATION);
-    if (!string.length) throw $SyntaxError(INVALID_NUMBER_REPRESENTATION);
+    if (typeof string != 'string') throw new $TypeError(INVALID_NUMBER_REPRESENTATION);
+    if (!string.length) throw new $SyntaxError(INVALID_NUMBER_REPRESENTATION);
     if (charAt(string, 0) === '-') {
       sign = -1;
       string = stringSlice(string, 1);
-      if (!string.length) throw $SyntaxError(INVALID_NUMBER_REPRESENTATION);
+      if (!string.length) throw new $SyntaxError(INVALID_NUMBER_REPRESENTATION);
     }
     R = radix === undefined ? 10 : toIntegerOrInfinity(radix);
-    if (R < 2 || R > 36) throw $RangeError(INVALID_RADIX);
+    if (R < 2 || R > 36) throw new $RangeError(INVALID_RADIX);
     if (!exec(valid, string) || numberToString(mathNum = parseInt(string, R), R) !== string) {
-      throw $SyntaxError(INVALID_NUMBER_REPRESENTATION);
+      throw new $SyntaxError(INVALID_NUMBER_REPRESENTATION);
     }
     return sign * mathNum;
   }
@@ -26075,7 +26134,6 @@ var defineBuiltInAccessor = __nccwpck_require__(42980);
 var hostReportErrors = __nccwpck_require__(37617);
 var wellKnownSymbol = __nccwpck_require__(48322);
 var InternalStateModule = __nccwpck_require__(31202);
-var OBSERVABLE_FORCED = __nccwpck_require__(19853);
 
 var $$OBSERVABLE = wellKnownSymbol('observable');
 var OBSERVABLE = 'Observable';
@@ -26239,7 +26297,7 @@ defineBuiltIns(ObservablePrototype, {
 
 defineBuiltIn(ObservablePrototype, $$OBSERVABLE, function () { return this; });
 
-$({ global: true, constructor: true, forced: OBSERVABLE_FORCED }, {
+$({ global: true, constructor: true, forced: true }, {
   Observable: $Observable
 });
 
@@ -26262,13 +26320,12 @@ var getIterator = __nccwpck_require__(43257);
 var getMethod = __nccwpck_require__(47591);
 var iterate = __nccwpck_require__(12566);
 var wellKnownSymbol = __nccwpck_require__(48322);
-var OBSERVABLE_FORCED = __nccwpck_require__(19853);
 
 var $$OBSERVABLE = wellKnownSymbol('observable');
 
 // `Observable.from` method
 // https://github.com/tc39/proposal-observable
-$({ target: 'Observable', stat: true, forced: OBSERVABLE_FORCED }, {
+$({ target: 'Observable', stat: true, forced: true }, {
   from: function from(x) {
     var C = isConstructor(this) ? this : getBuiltIn('Observable');
     var observableMethod = getMethod(anObject(x), $$OBSERVABLE);
@@ -26313,13 +26370,12 @@ __nccwpck_require__(36358);
 var $ = __nccwpck_require__(2374);
 var getBuiltIn = __nccwpck_require__(86632);
 var isConstructor = __nccwpck_require__(29258);
-var OBSERVABLE_FORCED = __nccwpck_require__(19853);
 
 var Array = getBuiltIn('Array');
 
 // `Observable.of` method
 // https://github.com/tc39/proposal-observable
-$({ target: 'Observable', stat: true, forced: OBSERVABLE_FORCED }, {
+$({ target: 'Observable', stat: true, forced: true }, {
   of: function of() {
     var C = isConstructor(this) ? this : getBuiltIn('Observable');
     var length = arguments.length;
@@ -26662,6 +26718,34 @@ $({ target: 'Reflect', stat: true }, {
     return function decorator(target, key) {
       ordinaryDefineOwnMetadata(metadataKey, metadataValue, anObject(target), toMetadataKey(key));
     };
+  }
+});
+
+
+/***/ }),
+
+/***/ 67115:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+var $ = __nccwpck_require__(2374);
+var uncurryThis = __nccwpck_require__(68610);
+var toString = __nccwpck_require__(45623);
+var WHITESPACES = __nccwpck_require__(2569);
+
+var charCodeAt = uncurryThis(''.charCodeAt);
+var replace = uncurryThis(''.replace);
+var NEED_ESCAPING = RegExp('[!"#$%&\'()*+,\\-./:;<=>?@[\\\\\\]^`{|}~' + WHITESPACES + ']', 'g');
+
+// `RegExp.escape` method
+// https://github.com/tc39/proposal-regex-escaping
+$({ target: 'RegExp', stat: true, forced: true }, {
+  escape: function escape(S) {
+    var str = toString(S);
+    var firstCode = charCodeAt(str, 0);
+    // escape first DecimalDigit
+    return (firstCode > 47 && firstCode < 58 ? '\\x3' : '') + replace(str, NEED_ESCAPING, '\\$&');
   }
 });
 
@@ -27129,7 +27213,7 @@ $({ target: 'Set', proto: true, real: true, forced: true }, {
         accumulator = callbackfn(accumulator, value, value, set);
       }
     });
-    if (noInitial) throw $TypeError('Reduce of empty set with no initial value');
+    if (noInitial) throw new $TypeError('Reduce of empty set with no initial value');
     return accumulator;
   }
 });
@@ -27387,7 +27471,7 @@ var INVALID_CLOSING_LINE = 'Invalid closing line';
 var dedentTemplateStringsArray = function (template) {
   var rawInput = template.raw;
   // https://github.com/tc39/proposal-string-dedent/issues/75
-  if (FREEZING && !isFrozen(rawInput)) throw $TypeError('Raw template should be frozen');
+  if (FREEZING && !isFrozen(rawInput)) throw new $TypeError('Raw template should be frozen');
   if (globalDedentRegistry.has(rawInput)) return globalDedentRegistry.get(rawInput);
   var raw = dedentStringsArray(rawInput);
   var cookedArr = cookStrings(raw);
@@ -27407,12 +27491,12 @@ var dedentStringsArray = function (template) {
   var i = 0;
   var lines, common, quasi, k;
 
-  if (!length) throw $TypeError(INVALID_TAG);
+  if (!length) throw new $TypeError(INVALID_TAG);
 
   for (; i < length; i++) {
     var element = t[i];
     if (typeof element == 'string') blocks[i] = split(element, NEW_LINE);
-    else throw $TypeError(INVALID_TAG);
+    else throw new $TypeError(INVALID_TAG);
   }
 
   for (i = 0; i < length; i++) {
@@ -27420,13 +27504,13 @@ var dedentStringsArray = function (template) {
     lines = blocks[i];
     if (i === 0) {
       if (lines.length === 1 || lines[0].length > 0) {
-        throw $TypeError(INVALID_OPENING_LINE);
+        throw new $TypeError(INVALID_OPENING_LINE);
       }
       lines[1] = '';
     }
     if (lastSplit) {
       if (lines.length === 1 || exec(NON_WHITESPACE, lines[lines.length - 1])) {
-        throw $TypeError(INVALID_CLOSING_LINE);
+        throw new $TypeError(INVALID_CLOSING_LINE);
       }
       lines[lines.length - 2] = '';
       lines[lines.length - 1] = '';
@@ -27567,7 +27651,7 @@ var $SuppressedError = function SuppressedError(error, suppressed, message) {
   var isInstance = isPrototypeOf(SuppressedErrorPrototype, this);
   var that;
   if (setPrototypeOf) {
-    that = setPrototypeOf($Error(), isInstance ? getPrototypeOf(this) : SuppressedErrorPrototype);
+    that = setPrototypeOf(new $Error(), isInstance ? getPrototypeOf(this) : SuppressedErrorPrototype);
   } else {
     that = isInstance ? this : create(SuppressedErrorPrototype);
     createNonEnumerableProperty(that, TO_STRING_TAG, 'Error');
@@ -28538,7 +28622,7 @@ var NativeDOMExceptionPrototype = NativeDOMException && NativeDOMException.proto
 var ErrorPrototype = Error.prototype;
 var setInternalState = InternalStateModule.set;
 var getInternalState = InternalStateModule.getterFor(DOM_EXCEPTION);
-var HAS_STACK = 'stack' in Error(DOM_EXCEPTION);
+var HAS_STACK = 'stack' in new Error(DOM_EXCEPTION);
 
 var codeFor = function (name) {
   return hasOwn(DOMExceptionConstants, name) && DOMExceptionConstants[name].m ? DOMExceptionConstants[name].c : 0;
@@ -28562,7 +28646,7 @@ var $DOMException = function DOMException() {
     this.code = code;
   }
   if (HAS_STACK) {
-    var error = Error(message);
+    var error = new Error(message);
     error.name = DOM_EXCEPTION;
     defineProperty(this, 'stack', createPropertyDescriptor(1, clearErrorStack(error.stack, 1)));
   }
@@ -28677,7 +28761,7 @@ var $DOMException = function DOMException() {
   var message = normalizeStringArgument(argumentsLength < 1 ? undefined : arguments[0]);
   var name = normalizeStringArgument(argumentsLength < 2 ? undefined : arguments[1], 'Error');
   var that = new NativeDOMException(message, name);
-  var error = Error(message);
+  var error = new Error(message);
   error.name = DOM_EXCEPTION;
   defineProperty(that, 'stack', createPropertyDescriptor(1, clearErrorStack(error.stack, 1)));
   inheritIfRequired(that, this, $DOMException);
@@ -28686,7 +28770,7 @@ var $DOMException = function DOMException() {
 
 var DOMExceptionPrototype = $DOMException.prototype = NativeDOMException.prototype;
 
-var ERROR_HAS_STACK = 'stack' in Error(DOM_EXCEPTION);
+var ERROR_HAS_STACK = 'stack' in new Error(DOM_EXCEPTION);
 var DOM_EXCEPTION_HAS_STACK = 'stack' in new NativeDOMException(1, 2);
 
 // eslint-disable-next-line es/no-object-getownpropertydescriptor -- safe
@@ -28809,7 +28893,7 @@ try {
           return global;
         },
         set: function self(value) {
-          if (this !== global) throw $TypeError('Illegal invocation');
+          if (this !== global) throw new $TypeError('Illegal invocation');
           defineProperty(global, 'self', {
             value: value,
             writable: true,
@@ -28919,8 +29003,9 @@ var validateArgumentsLength = __nccwpck_require__(80493);
 var getRegExpFlags = __nccwpck_require__(22509);
 var MapHelpers = __nccwpck_require__(71505);
 var SetHelpers = __nccwpck_require__(3001);
+var arrayBufferTransfer = __nccwpck_require__(66304);
 var ERROR_STACK_INSTALLABLE = __nccwpck_require__(36538);
-var PROPER_TRANSFER = __nccwpck_require__(13177);
+var PROPER_STRUCTURED_CLONE_TRANSFER = __nccwpck_require__(13177);
 
 var Object = global.Object;
 var Array = global.Array;
@@ -29127,37 +29212,37 @@ var structuredCloneInternal = function (value, map, transferredBuffers) {
       name = value.name;
       switch (name) {
         case 'AggregateError':
-          cloned = getBuiltin('AggregateError')([]);
+          cloned = new (getBuiltin('AggregateError'))([]);
           break;
         case 'EvalError':
-          cloned = EvalError();
+          cloned = new EvalError();
           break;
         case 'RangeError':
-          cloned = RangeError();
+          cloned = new RangeError();
           break;
         case 'ReferenceError':
-          cloned = ReferenceError();
+          cloned = new ReferenceError();
           break;
         case 'SyntaxError':
-          cloned = SyntaxError();
+          cloned = new SyntaxError();
           break;
         case 'TypeError':
-          cloned = TypeError();
+          cloned = new TypeError();
           break;
         case 'URIError':
-          cloned = URIError();
+          cloned = new URIError();
           break;
         case 'CompileError':
-          cloned = CompileError();
+          cloned = new CompileError();
           break;
         case 'LinkError':
-          cloned = LinkError();
+          cloned = new LinkError();
           break;
         case 'RuntimeError':
-          cloned = RuntimeError();
+          cloned = new RuntimeError();
           break;
         default:
-          cloned = Error();
+          cloned = new Error();
       }
       break;
     case 'DOMException':
@@ -29420,7 +29505,7 @@ var replacePlaceholders = function (value, map) {
 };
 
 var tryToTransfer = function (rawTransfer, map) {
-  if (!isObject(rawTransfer)) throw TypeError('Transfer option cannot be converted to a sequence');
+  if (!isObject(rawTransfer)) throw new TypeError('Transfer option cannot be converted to a sequence');
 
   var transfer = [];
 
@@ -29445,7 +29530,7 @@ var tryToTransfer = function (rawTransfer, map) {
 
     if (mapHas(map, value)) throw new DOMException('Duplicate transferable', DATA_CLONE_ERROR);
 
-    if (PROPER_TRANSFER) {
+    if (PROPER_STRUCTURED_CLONE_TRANSFER) {
       transferred = nativeStructuredClone(value, { transfer: [value] });
     } else switch (type) {
       case 'ImageBitmap':
@@ -29493,8 +29578,8 @@ var tryToTransferBuffers = function (transfer, map) {
 
     if (mapHas(map, value)) throw new DOMException('Duplicate transferable', DATA_CLONE_ERROR);
 
-    if (PROPER_TRANSFER) {
-      transferred = nativeStructuredClone(value, { transfer: [value] });
+    if (arrayBufferTransfer) {
+      transferred = arrayBufferTransfer(value, undefined, true);
     } else {
       if (!isCallable(value.transfer)) throwUnpolyfillable('ArrayBuffer', TRANSFERRING);
       transferred = value.transfer();
@@ -29506,7 +29591,7 @@ var tryToTransferBuffers = function (transfer, map) {
 
 // `structuredClone` method
 // https://html.spec.whatwg.org/multipage/structured-data.html#dom-structuredclone
-$({ global: true, enumerable: true, sham: !PROPER_TRANSFER, forced: FORCED_REPLACEMENT }, {
+$({ global: true, enumerable: true, sham: !PROPER_STRUCTURED_CLONE_TRANSFER, forced: FORCED_REPLACEMENT }, {
   structuredClone: function structuredClone(value /* , { transfer } */) {
     var options = validateArgumentsLength(arguments.length, 1) > 1 && !isNullOrUndefined(arguments[1]) ? anObject(arguments[1]) : undefined;
     var transfer = options ? options.transfer : undefined;
@@ -29710,7 +29795,7 @@ URLSearchParamsState.prototype = {
           (first = call(entryNext, entryIterator)).done ||
           (second = call(entryNext, entryIterator)).done ||
           !call(entryNext, entryIterator).done
-        ) throw TypeError('Expected sequence with length 2');
+        ) throw new TypeError('Expected sequence with length 2');
         push(this.entries, { key: $toString(first.value), value: $toString(second.value) });
       }
     } else for (var key in object) if (hasOwn(object, key)) {
@@ -30468,12 +30553,12 @@ var URLState = function (url, isBase, base) {
   var baseState, failure, searchParams;
   if (isBase) {
     failure = this.parse(urlString);
-    if (failure) throw TypeError(failure);
+    if (failure) throw new TypeError(failure);
     this.searchParams = null;
   } else {
     if (base !== undefined) baseState = new URLState(base, true);
     failure = this.parse(urlString, null, baseState);
-    if (failure) throw TypeError(failure);
+    if (failure) throw new TypeError(failure);
     searchParams = getInternalSearchParamsState(new URLSearchParams());
     searchParams.bindURL(this);
     this.searchParams = searchParams;
@@ -30962,7 +31047,7 @@ URLState.prototype = {
   // https://url.spec.whatwg.org/#dom-url-href
   setHref: function (href) {
     var failure = this.parse(href);
-    if (failure) throw TypeError(failure);
+    if (failure) throw new TypeError(failure);
     this.searchParams.update();
   },
   // https://url.spec.whatwg.org/#dom-url-origin
@@ -32523,6 +32608,9 @@ var WriteAfterEndError = createErrorType(
   "write after end"
 );
 
+// istanbul ignore next
+var destroy = Writable.prototype.destroy || noop;
+
 // An HTTP(S) request that can be redirected
 function RedirectableRequest(options, responseCallback) {
   // Initialize the request
@@ -32553,8 +32641,15 @@ function RedirectableRequest(options, responseCallback) {
 RedirectableRequest.prototype = Object.create(Writable.prototype);
 
 RedirectableRequest.prototype.abort = function () {
-  abortRequest(this._currentRequest);
+  destroyRequest(this._currentRequest);
+  this._currentRequest.abort();
   this.emit("abort");
+};
+
+RedirectableRequest.prototype.destroy = function (error) {
+  destroyRequest(this._currentRequest, error);
+  destroy.call(this, error);
+  return this;
 };
 
 // Writes buffered data to the current native request
@@ -32669,6 +32764,7 @@ RedirectableRequest.prototype.setTimeout = function (msecs, callback) {
     self.removeListener("abort", clearTimer);
     self.removeListener("error", clearTimer);
     self.removeListener("response", clearTimer);
+    self.removeListener("close", clearTimer);
     if (callback) {
       self.removeListener("timeout", callback);
     }
@@ -32695,6 +32791,7 @@ RedirectableRequest.prototype.setTimeout = function (msecs, callback) {
   this.on("abort", clearTimer);
   this.on("error", clearTimer);
   this.on("response", clearTimer);
+  this.on("close", clearTimer);
 
   return this;
 };
@@ -32846,7 +32943,7 @@ RedirectableRequest.prototype._processResponse = function (response) {
   }
 
   // The response is a redirect, so abort the current request
-  abortRequest(this._currentRequest);
+  destroyRequest(this._currentRequest);
   // Discard the remainder of the response to avoid waiting for data
   response.destroy();
 
@@ -33075,12 +33172,12 @@ function createErrorType(code, message, baseClass) {
   return CustomError;
 }
 
-function abortRequest(request) {
+function destroyRequest(request, error) {
   for (var event of events) {
     request.removeListener(event, eventHandlers[event]);
   }
   request.on("error", noop);
-  request.abort();
+  request.destroy(error);
 }
 
 function isSubdomain(subdomain, domain) {
@@ -71923,7 +72020,7 @@ module.exports = require("zlib");
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
-// Axios v1.5.0 Copyright (c) 2023 Matt Zabriskie and contributors
+// Axios v1.5.1 Copyright (c) 2023 Matt Zabriskie and contributors
 
 
 const FormData$1 = __nccwpck_require__(22220);
@@ -73308,7 +73405,7 @@ const defaults = {
 
   transitional: transitionalDefaults,
 
-  adapter: 'http' ,
+  adapter: ['xhr', 'http'],
 
   transformRequest: [function transformRequest(data, headers) {
     const contentType = headers.getContentType() || '';
@@ -73890,7 +73987,7 @@ function buildFullPath(baseURL, requestedURL) {
   return requestedURL;
 }
 
-const VERSION = "1.5.0";
+const VERSION = "1.5.1";
 
 function parseProtocol(url) {
   const match = /^([-+\w]{1,25})(:?\/\/|:)/.exec(url);
@@ -74819,7 +74916,7 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
           delete res.headers['content-encoding'];
         }
 
-        switch (res.headers['content-encoding']) {
+        switch ((res.headers['content-encoding'] || '').toLowerCase()) {
         /*eslint default-case:0*/
         case 'gzip':
         case 'x-gzip':
@@ -74952,7 +75049,7 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
       // This is forcing a int timeout to avoid problems if the `req` interface doesn't handle other types.
       const timeout = parseInt(config.timeout, 10);
 
-      if (isNaN(timeout)) {
+      if (Number.isNaN(timeout)) {
         reject(new AxiosError(
           'error trying to parse `config.timeout` to int',
           AxiosError.ERR_BAD_OPTION_VALUE,
@@ -75171,11 +75268,16 @@ const xhrAdapter = isXHRAdapterSupported && function (config) {
       }
     }
 
+    let contentType;
+
     if (utils.isFormData(requestData)) {
       if (platform.isStandardBrowserEnv || platform.isStandardBrowserWebWorkerEnv) {
         requestHeaders.setContentType(false); // Let the browser set it
-      } else {
-        requestHeaders.setContentType('multipart/form-data;', false); // mobile/desktop app frameworks
+      } else if(!requestHeaders.getContentType(/^\s*multipart\/form-data/)){
+        requestHeaders.setContentType('multipart/form-data'); // mobile/desktop app frameworks
+      } else if(utils.isString(contentType = requestHeaders.getContentType())){
+        // fix semicolon duplication issue for ReactNative FormData implementation
+        requestHeaders.setContentType(contentType.replace(/^\s*(multipart\/form-data);+/, '$1'));
       }
     }
 
@@ -75368,7 +75470,7 @@ const knownAdapters = {
 };
 
 utils.forEach(knownAdapters, (fn, value) => {
-  if(fn) {
+  if (fn) {
     try {
       Object.defineProperty(fn, 'name', {value});
     } catch (e) {
@@ -75378,6 +75480,10 @@ utils.forEach(knownAdapters, (fn, value) => {
   }
 });
 
+const renderReason = (reason) => `- ${reason}`;
+
+const isResolvedHandle = (adapter) => utils.isFunction(adapter) || adapter === null || adapter === false;
+
 const adapters = {
   getAdapter: (adapters) => {
     adapters = utils.isArray(adapters) ? adapters : [adapters];
@@ -75386,30 +75492,44 @@ const adapters = {
     let nameOrAdapter;
     let adapter;
 
+    const rejectedReasons = {};
+
     for (let i = 0; i < length; i++) {
       nameOrAdapter = adapters[i];
-      if((adapter = utils.isString(nameOrAdapter) ? knownAdapters[nameOrAdapter.toLowerCase()] : nameOrAdapter)) {
+      let id;
+
+      adapter = nameOrAdapter;
+
+      if (!isResolvedHandle(nameOrAdapter)) {
+        adapter = knownAdapters[(id = String(nameOrAdapter)).toLowerCase()];
+
+        if (adapter === undefined) {
+          throw new AxiosError(`Unknown adapter '${id}'`);
+        }
+      }
+
+      if (adapter) {
         break;
       }
+
+      rejectedReasons[id || '#' + i] = adapter;
     }
 
     if (!adapter) {
-      if (adapter === false) {
-        throw new AxiosError(
-          `Adapter ${nameOrAdapter} is not supported by the environment`,
-          'ERR_NOT_SUPPORT'
+
+      const reasons = Object.entries(rejectedReasons)
+        .map(([id, state]) => `adapter ${id} ` +
+          (state === false ? 'is not supported by the environment' : 'is not available in the build')
         );
-      }
 
-      throw new Error(
-        utils.hasOwnProp(knownAdapters, nameOrAdapter) ?
-          `Adapter '${nameOrAdapter}' is not available in the build` :
-          `Unknown adapter '${nameOrAdapter}'`
+      let s = length ?
+        (reasons.length > 1 ? 'since :\n' + reasons.map(renderReason).join('\n') : ' ' + renderReason(reasons[0])) :
+        'as no adapter specified';
+
+      throw new AxiosError(
+        `There is no suitable adapter to dispatch the request ` + s,
+        'ERR_NOT_SUPPORT'
       );
-    }
-
-    if (!utils.isFunction(adapter)) {
-      throw new TypeError('adapter is not a function');
     }
 
     return adapter;
@@ -76174,7 +76294,7 @@ module.exports = axios;
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler API client.","version":"6.4.18","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <code@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"licenses":[{"type":"MIT","url":"https://github.com/jscrambler/javascript-jscrambler/blob/master/LICENSE-MIT"}],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"grunt watch","prepublish":"npm run build"},"engines":{"node":">= 6.10.0"},"dependencies":{"@jscrambler/https-proxy-agent":"^5.0.1","axios":"^1.4.0","commander":"^2.8.1","core-js":"^3.16.4","filesize-parser":"1.5.0","fs-extra":"^10.1.0","glob":"^8.1.0","http-proxy-agent":"^4.0.1","jszip":"^3.7.1","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","q":"^1.4.1","rc":"^1.1.0","regenerator-runtime":"^0.13.9","snake-case":"^2.1.0","temp":"^0.8.3"},"devDependencies":{"@babel/cli":"^7.14.8","@babel/core":"^7.15.0","@babel/plugin-proposal-object-rest-spread":"^7.14.7","@babel/preset-env":"^7.15.0","grunt":"^1.0.2","grunt-cli":"^1.2.0","grunt-contrib-clean":"^1.0.0","grunt-contrib-copy":"^1.0.0","grunt-contrib-watch":"^1.0.0"},"files":["dist","LICENSE-MIT"],"main":"dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"}}');
+module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler API client.","version":"6.4.19","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <code@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"licenses":[{"type":"MIT","url":"https://github.com/jscrambler/javascript-jscrambler/blob/master/LICENSE-MIT"}],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"grunt watch","prepublish":"npm run build"},"engines":{"node":">= 6.10.0"},"dependencies":{"@jscrambler/https-proxy-agent":"^5.0.1","axios":"^1.4.0","commander":"^2.8.1","core-js":"^3.16.4","filesize-parser":"1.5.0","fs-extra":"^10.1.0","glob":"^8.1.0","http-proxy-agent":"^4.0.1","jszip":"^3.7.1","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","q":"^1.4.1","rc":"^1.1.0","regenerator-runtime":"^0.13.9","snake-case":"^2.1.0","temp":"^0.8.3"},"devDependencies":{"@babel/cli":"^7.14.8","@babel/core":"^7.15.0","@babel/plugin-proposal-object-rest-spread":"^7.14.7","@babel/preset-env":"^7.15.0","grunt":"^1.0.2","grunt-cli":"^1.2.0","grunt-contrib-clean":"^1.0.0","grunt-contrib-copy":"^1.0.0","grunt-contrib-watch":"^1.0.0"},"files":["dist","LICENSE-MIT"],"main":"dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"}}');
 
 /***/ }),
 

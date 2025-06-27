@@ -8422,7 +8422,6 @@ var _default = exports.Z = {
   // Jscrambler or if you're provided access to beta features of our product.
   //
   async protectAndDownload(configPathOrObject, destCallback) {
-    var _this = this;
     const start = Date.now();
     const finalConfig = buildFinalConfig(configPathOrObject);
     const {
@@ -8489,6 +8488,9 @@ var _default = exports.Z = {
     let filesSrc = finalConfig.filesSrc;
     let filesDest = finalConfig.filesDest;
     let runBeforeProtection = finalConfig.beforeProtection;
+    if (finalConfig.numberOfProtections && finalConfig.numberOfProtections > 1) {
+      console.log("Protections will be stored in ".concat(filesDest).concat(filesDest.slice(-1) === '/' ? '' : '/', "[protection-id]"));
+    }
     if (sources) {
       filesSrc = undefined;
     }
@@ -8619,13 +8621,16 @@ var _default = exports.Z = {
       process.exit(1);
     };
     process.once('SIGINT', onExitCancelProtection).once('SIGTERM', onExitCancelProtection);
-    const processedProtections = await this.pollProtections(client, applicationId, protectionIds, await (0, _getProtectionDefaultFragments.default)(client));
+    const downloadOptions = {
+      filesDest,
+      destCallback,
+      stream,
+      multiple: protectionOptions.numberOfProtections && protectionOptions.numberOfProtections > 1,
+      deleteProtectionOnSuccess
+    };
+    const processedProtections = await this.pollProtections(client, applicationId, protectionIds, await (0, _getProtectionDefaultFragments.default)(client), downloadOptions);
     process.removeListener('SIGINT', onExitCancelProtection).removeListener('SIGTERM', onExitCancelProtection);
-    const handleProtection = async function (protection) {
-      let {
-        outPrefix = '',
-        printProtectionId = true
-      } = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    const handleProtection = async protection => {
       if (protection.growthWarning) {
         console.warn("Warning: Your protected application has surpassed a reasonable file growth.\nFor more information on what might have caused this, please see the Protection Report.\nLink: ".concat(APP_URL, "."));
       }
@@ -8633,7 +8638,7 @@ var _default = exports.Z = {
         console.warn("Warning: Since your plan is a Trial, your protected files will stop working on ".concat(protection.parameters.find(p => p.name === 'dateLock' && p.options.endDate).options.endDate));
       }
       if (debug) {
-        console.log('Finished protecting');
+        console.log("Finished protecting".concat(downloadOptions.multiple ? ": ".concat(protection._id) : ''));
       }
       if (protection.deprecations) {
         protection.deprecations.forEach(deprecation => {
@@ -8668,49 +8673,63 @@ var _default = exports.Z = {
           sourcesErrors.forEach(e => console.warn("Non-fatal error: \"".concat(e.message, "\" in ").concat(e.filename)));
         }
       }
-      if (debug) {
-        console.log('Downloading protection result');
-      }
-      const download = await _this.downloadApplicationProtection(client, protection._id);
-      errorHandler(download);
-      if (debug) {
-        console.log('Unzipping files');
-      }
-      await (0, _zip.unzip)(download, (filesDest ? "".concat(filesDest).concat(outPrefix) : filesDest) || destCallback, stream);
-      if (debug) {
-        console.log('Finished unzipping files');
-      }
-      if (printProtectionId) {
-        console.log(protection._id);
-      }
-
-      // change this to have the variable that checks if the protection is to be removed
-      if (deleteProtectionOnSuccess) {
-        await _this.removeProtection(client, protection._id, applicationId).then(() => {
-          if (debug) {
-            console.log('Protection has been successful and will now be deleted');
-          }
-        }).catch(error => console.error(error));
+      if (!protectionOptions.numberOfProtections || protectionOptions.numberOfProtections === 1) {
+        this.handleApplicationProtectionDownload(client, protection._id, downloadOptions);
       }
       return protection._id;
     };
     if (processedProtections.length === 1) {
       return handleProtection(processedProtections[0]);
     }
-    console.log("Protections stored in ".concat(filesDest, "/[protection-id]"));
     for (let i = 0; i < processedProtections.length; i++) {
       const protection = processedProtections[i];
       try {
-        await handleProtection(protection, {
-          outPrefix: "/".concat(protection._id, "/"),
-          printProtectionId: false
-        });
+        await handleProtection(protection);
       } catch (e) {
         console.error(e);
       }
     }
     console.log("Runtime: ".concat(processedProtections.length, " protections in ").concat(Math.round((Date.now() - start) / 1000), "s"));
     return protectionIds;
+  },
+  /**
+   * Handle the download, unzipping, and possible deletion of protections
+   * @param {object} client
+   * @param {string} instrumentationId
+   * @returns {Promise<object>}
+   */
+  async handleApplicationProtectionDownload(client, protectionId, downloadOptions) {
+    const {
+      filesDest,
+      destCallback,
+      stream,
+      multiple,
+      deleteProtectionOnSuccess
+    } = downloadOptions;
+    if (debug) {
+      console.log("Downloading protection ".concat(multiple ? "".concat(protectionId, " ") : '', "result"));
+    }
+    const download = await this.downloadApplicationProtection(client, protectionId);
+    errorHandler(download);
+    if (debug) {
+      console.log("Unzipping files".concat(multiple ? " from protection ".concat(protectionId) : ''));
+    }
+    await (0, _zip.unzip)(download, (filesDest ? "".concat(filesDest).concat(multiple ? "/".concat(protectionId, "/") : '') : filesDest) || destCallback, stream);
+    if (debug) {
+      console.log("Finished unzipping files for protection".concat(multiple ? " ".concat(protectionId) : ''));
+    }
+    if (!multiple) {
+      console.log(protectionId);
+    }
+
+    // change this to have the variable that checks if the protection is to be removed
+    if (deleteProtectionOnSuccess) {
+      await this.removeProtection(client, protectionId, applicationId).then(() => {
+        if (debug) {
+          console.log('Protection has been successful and will now be deleted');
+        }
+      }).catch(error => console.error(error));
+    }
   },
   /**
    * Instrument and download application sources for profiling purposes
@@ -9038,7 +9057,7 @@ var _default = exports.Z = {
     };
     return poll();
   },
-  async pollProtections(client, applicationId, protectionIds, fragments) {
+  async pollProtections(client, applicationId, protectionIds, fragments, downloadOptions) {
     if (protectionIds.length === 1) {
       return [await this.pollProtection(client, applicationId, protectionIds[0], fragments)];
     }
@@ -9065,7 +9084,7 @@ var _default = exports.Z = {
             state
           } = _ref4;
           return !seen[_id] && state !== 'canceled';
-        }).forEach(_ref5 => {
+        }).forEach(async _ref5 => {
           let {
             _id,
             startedAt,
@@ -9074,6 +9093,8 @@ var _default = exports.Z = {
           } = _ref5;
           seen[_id] = true;
           console.log("[".concat(Object.keys(seen).length, "/").concat(protectionIds.length, "] Protection=").concat(_id, ", state=").concat(state, ", build-time=").concat(Math.round((new Date(finishedAt) - new Date(startedAt)) / 1000), "s"));
+          await this.handleApplicationProtectionDownload(client, _id, downloadOptions);
+          console.log("Downloaded: ".concat(_id));
         });
         if (ended.length < protectionIds.length) {
           await new Promise(resolve => setTimeout(resolve, getPollingInterval(start)));
@@ -67615,7 +67636,7 @@ module.exports = axios;
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler Code Integrity API client.","version":"8.9.2","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <support@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git","directory":"packages/jscrambler-cli"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"license":"MIT","publishConfig":{"access":"public","registry":"https://registry.npmjs.org/"},"engines":{"node":">= 12.17.0"},"dependencies":{"axios":"1.8.2","commander":"^2.8.1","core-js":"3.38.1","filesize-parser":"1.5.0","glob":"^8.1.0","http-proxy-agent":"7.0.2","https-proxy-agent":"7.0.4","jszip":"^3.8.0","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","rc":"^1.1.0"},"devDependencies":{"@babel/cli":"^7.23.4","@babel/core":"^7.23.7","@babel/preset-env":"^7.23.8"},"files":["dist","CHANGELOG.md"],"exports":"./dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"},"keywords":["cli","jscrambler","obfuscate","protect","js","javascript"],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"babel -w src --out-dir dist","prepublish":"npm run build","eslint":"eslint src/","eslint:fix":"eslint src/ --fix"}}');
+module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler Code Integrity API client.","version":"8.9.3","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <support@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git","directory":"packages/jscrambler-cli"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"license":"MIT","publishConfig":{"access":"public","registry":"https://registry.npmjs.org/"},"engines":{"node":">= 12.17.0"},"dependencies":{"axios":"1.8.2","commander":"^2.8.1","core-js":"3.38.1","filesize-parser":"1.5.0","glob":"^8.1.0","http-proxy-agent":"7.0.2","https-proxy-agent":"7.0.4","jszip":"^3.8.0","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","rc":"^1.1.0"},"devDependencies":{"@babel/cli":"^7.23.4","@babel/core":"^7.23.7","@babel/preset-env":"^7.23.8"},"files":["dist","CHANGELOG.md"],"exports":"./dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"},"keywords":["cli","jscrambler","obfuscate","protect","js","javascript"],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"babel -w src --out-dir dist","prepublish":"npm run build","eslint":"eslint src/","eslint:fix":"eslint src/ --fix"}}');
 
 /***/ }),
 

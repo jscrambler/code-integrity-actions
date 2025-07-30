@@ -2033,9 +2033,7 @@ class Agent extends http.Agent {
     // In order to properly update the socket pool, we need to call `getName()` on
     // the core `https.Agent` if it is a secureEndpoint.
     getName(options) {
-        const secureEndpoint = typeof options.secureEndpoint === 'boolean'
-            ? options.secureEndpoint
-            : this.isSecureEndpoint(options);
+        const secureEndpoint = this.isSecureEndpoint(options);
         if (secureEndpoint) {
             // @ts-expect-error `getName()` isn't defined in `@types/node`
             return https_1.Agent.prototype.getName.call(this, options);
@@ -5164,6 +5162,7 @@ var https = __nccwpck_require__(5687);
 var parseUrl = (__nccwpck_require__(7310).parse);
 var fs = __nccwpck_require__(7147);
 var Stream = (__nccwpck_require__(2781).Stream);
+var crypto = __nccwpck_require__(6113);
 var mime = __nccwpck_require__(2555);
 var asynckit = __nccwpck_require__(4947);
 var setToStringTag = __nccwpck_require__(3085);
@@ -5501,12 +5500,7 @@ FormData.prototype._generateBoundary = function () {
   // This generates a 50 character boundary similar to those used by Firefox.
 
   // They are optimized for boyer-moore parsing.
-  var boundary = '--------------------------';
-  for (var i = 0; i < 24; i++) {
-    boundary += Math.floor(Math.random() * 10).toString(16);
-  }
-
-  this._boundary = boundary;
+  this._boundary = '--------------------------' + crypto.randomBytes(12).toString('hex');
 };
 
 // Note: getLengthSync DOESN'T calculate streams length
@@ -8466,7 +8460,8 @@ var _default = exports.Z = {
       mode,
       saveSrc,
       globalNamesPrefix,
-      useGlobalNamesOnModules
+      useGlobalNamesOnModules,
+      generateAlias
     } = finalConfig;
     const {
       accessKey,
@@ -8557,7 +8552,8 @@ var _default = exports.Z = {
       ensureCodeAnnotation,
       useProfilingData,
       useRecommendedOrder,
-      mode
+      mode,
+      generateAlias
     };
     for (const prop in dataToValidate) {
       const value = dataToValidate[prop];
@@ -8592,7 +8588,8 @@ var _default = exports.Z = {
       forceAppEnvironment,
       mode,
       globalNamesPrefix,
-      useGlobalNamesOnModules
+      useGlobalNamesOnModules,
+      generateAlias
     });
     if (finalConfig.inputSymbolTable) {
       const inputSymbolTableContents = await _fs.default.promises.readFile(finalConfig.inputSymbolTable, 'utf-8');
@@ -8674,7 +8671,7 @@ var _default = exports.Z = {
         }
       }
       if (!protectionOptions.numberOfProtections || protectionOptions.numberOfProtections === 1) {
-        this.handleApplicationProtectionDownload(client, protection._id, downloadOptions);
+        await this.handleApplicationProtectionDownload(client, protection._id, applicationId, downloadOptions);
       }
       return protection._id;
     };
@@ -8695,10 +8692,12 @@ var _default = exports.Z = {
   /**
    * Handle the download, unzipping, and possible deletion of protections
    * @param {object} client
-   * @param {string} instrumentationId
+   * @param {string} protectionId
+   * @param {string} applicationId
+   * @param {object} downloadOptions
    * @returns {Promise<object>}
    */
-  async handleApplicationProtectionDownload(client, protectionId, downloadOptions) {
+  async handleApplicationProtectionDownload(client, protectionId, applicationId, downloadOptions) {
     const {
       filesDest,
       destCallback,
@@ -9093,7 +9092,7 @@ var _default = exports.Z = {
           } = _ref5;
           seen[_id] = true;
           console.log("[".concat(Object.keys(seen).length, "/").concat(protectionIds.length, "] Protection=").concat(_id, ", state=").concat(state, ", build-time=").concat(Math.round((new Date(finishedAt) - new Date(startedAt)) / 1000), "s"));
-          await this.handleApplicationProtectionDownload(client, _id, downloadOptions);
+          await this.handleApplicationProtectionDownload(client, _id, applicationId, downloadOptions);
           console.log("Downloaded: ".concat(_id));
         });
         if (ended.length < protectionIds.length) {
@@ -67636,7 +67635,7 @@ module.exports = axios;
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler Code Integrity API client.","version":"8.9.3","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <support@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git","directory":"packages/jscrambler-cli"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"license":"MIT","publishConfig":{"access":"public","registry":"https://registry.npmjs.org/"},"engines":{"node":">= 12.17.0"},"dependencies":{"axios":"1.8.2","commander":"^2.8.1","core-js":"3.38.1","filesize-parser":"1.5.0","glob":"^8.1.0","http-proxy-agent":"7.0.2","https-proxy-agent":"7.0.4","jszip":"^3.8.0","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","rc":"^1.1.0"},"devDependencies":{"@babel/cli":"^7.23.4","@babel/core":"^7.23.7","@babel/preset-env":"^7.23.8"},"files":["dist","CHANGELOG.md"],"exports":"./dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"},"keywords":["cli","jscrambler","obfuscate","protect","js","javascript"],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"babel -w src --out-dir dist","prepublish":"npm run build","eslint":"eslint src/","eslint:fix":"eslint src/ --fix"}}');
+module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler Code Integrity API client.","version":"8.10.1","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <support@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git","directory":"packages/jscrambler-cli"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"license":"MIT","publishConfig":{"access":"public","registry":"https://registry.npmjs.org/"},"engines":{"node":">= 12.17.0"},"dependencies":{"axios":"1.8.2","commander":"^2.8.1","core-js":"3.38.1","filesize-parser":"1.5.0","glob":"^8.1.0","http-proxy-agent":"7.0.2","https-proxy-agent":"7.0.4","jszip":"^3.8.0","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","rc":"^1.1.0"},"devDependencies":{"@babel/cli":"^7.23.4","@babel/core":"^7.23.7","@babel/preset-env":"^7.23.8"},"files":["dist","CHANGELOG.md"],"exports":"./dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"},"keywords":["cli","jscrambler","obfuscate","protect","js","javascript"],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"babel -w src --out-dir dist","prepublish":"npm run build","eslint":"eslint src/","eslint:fix":"eslint src/ --fix"}}');
 
 /***/ }),
 

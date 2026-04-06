@@ -7131,10 +7131,10 @@ function cleanupInputFields(args, fragments) {
     if (!hasFieldArg && typeof options[field] !== 'undefined') {
       options[field] = undefined;
       cleanedUpFragments = cleanedUpFragments.replace(new RegExp(",?[s|\n]*".concat(field)), '');
-      console.warn("This API Version does not support the ".concat(field, " argument."));
+      console.warn("Warning: This API Version does not support the '".concat(field, "' argument."));
     }
   }
-  ['tolerateMinification', 'useProfilingData', 'useAppClassification', 'inputSymbolTable', 'entryPoint', 'ensureCodeAnnotation', 'generateAlias'].forEach(fieldCleanUp);
+  ['tolerateMinification', 'useProfilingData', 'useAppClassification', 'inputSymbolTable', 'entryPoint', 'ensureCodeAnnotation', 'generateAlias', 'customLabels'].forEach(fieldCleanUp);
   return [options, cleanedUpFragments];
 }
 
@@ -7881,6 +7881,7 @@ var _default = exports.Z = {
   // {
   //   "filesSrc": [""],
   //   "params": {},
+  //   "customLabels": { "env": "production", "version": "9.2.2" },
   //   "cwd": "",
   //   "host": "api.jscrambler.com",
   //   "port": "443",
@@ -7892,6 +7893,9 @@ var _default = exports.Z = {
   // entire application sources.
   //
   // `params` if provided will replace all the application transformation parameters.
+  //
+  // `customLabels` if provided attaches string key-value metadata to the protection request
+  // (API must support this field).
   //
   // `cwd` allows you to set the current working directory to resolve problems with
   // relative paths with your `filesSrc` is outside the current working directory.
@@ -7946,7 +7950,8 @@ var _default = exports.Z = {
       saveSrc,
       globalNamesPrefix,
       useGlobalNamesOnModules,
-      generateAlias
+      generateAlias,
+      customLabels
     } = finalConfig;
     const {
       accessKey,
@@ -8076,6 +8081,10 @@ var _default = exports.Z = {
       useGlobalNamesOnModules,
       generateAlias
     });
+    const normalizedCustomLabels = (0, _utils.validateCustomLabels)(customLabels);
+    if (Object.keys(normalizedCustomLabels).length) {
+      protectionOptions.customLabels = normalizedCustomLabels;
+    }
     if (finalConfig.inputSymbolTable) {
       const inputSymbolTableContents = await _fs.default.promises.readFile(finalConfig.inputSymbolTable, 'utf-8');
       protectionOptions.inputSymbolTable = inputSymbolTableContents;
@@ -9362,8 +9371,10 @@ exports.PREPEND_JS_TYPE = exports.APPEND_JS_TYPE = void 0;
 exports.concatenate = concatenate;
 exports.getMatchedFiles = getMatchedFiles;
 exports.isJavascriptFile = isJavascriptFile;
+exports.validateCustomLabels = validateCustomLabels;
 exports.validateNProtections = validateNProtections;
 exports.validateThresholdFn = void 0;
+__nccwpck_require__(7622);
 var _glob = __nccwpck_require__(1444);
 var _fs = _interopRequireDefault(__nccwpck_require__(7147));
 var _path = __nccwpck_require__(1017);
@@ -9395,6 +9406,33 @@ function validateNProtections(n) {
     process.exit(1);
   }
   return nProtections;
+}
+
+/**
+ * Validate protection `customLabels`: a plain object with non-empty keys and string values.
+ * @param {*} customLabels From config or programmatic options; omit or pass `undefined` for none.
+ * @returns {Object.<string, string>} A shallow copy when valid; `{}` when `customLabels` is `undefined`.
+ * @throws {Error} If `customLabels` is `null`, an array, a non-object, or has invalid keys/values.
+ */
+function validateCustomLabels(customLabels) {
+  if (typeof customLabels === 'undefined') {
+    return {};
+  }
+  if (customLabels === null || typeof customLabels !== 'object' || Array.isArray(customLabels)) {
+    throw new Error('Invalid *customLabels*: expected a plain object. Eg: { "env": "production", "version": "9.2.2" }');
+  }
+  const out = {};
+  for (const key of Object.keys(customLabels)) {
+    if (!key) {
+      throw new Error('Invalid *customLabels*: keys must be non-empty strings. Eg: { "env": "production", "version": "9.2.2" }');
+    }
+    const value = customLabels[key];
+    if (typeof value !== 'string') {
+      throw new Error("Invalid *customLabels*: value for \"".concat(key, "\" must be a string. Eg: { \"env\": \"production\", \"version\": \"9.2.2\" }"));
+    }
+    out[key] = value;
+  }
+  return out;
 }
 const APPEND_JS_TYPE = exports.APPEND_JS_TYPE = 'append-js';
 const PREPEND_JS_TYPE = exports.PREPEND_JS_TYPE = 'prepend-js';
@@ -64924,7 +64962,7 @@ module.exports = axios;
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler Code Integrity API client.","version":"8.10.9","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <support@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git","directory":"packages/jscrambler-cli"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"license":"MIT","publishConfig":{"access":"public","registry":"https://registry.npmjs.org/"},"engines":{"node":">= 12.17.0"},"dependencies":{"axios":"1.13.5","commander":"^2.8.1","core-js":"3.38.1","filesize-parser":"1.5.0","glob":"13.0.6","http-proxy-agent":"7.0.2","https-proxy-agent":"7.0.4","jszip":"^3.8.0","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","rc":"^1.1.0"},"devDependencies":{"@babel/cli":"^7.23.4","@babel/core":"^7.23.7","@babel/preset-env":"^7.23.8"},"files":["dist","CHANGELOG.md"],"exports":"./dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"},"keywords":["cli","jscrambler","obfuscate","protect","js","javascript"],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"babel -w src --out-dir dist","prepublish":"npm run build","eslint":"eslint src/","eslint:fix":"eslint src/ --fix"}}');
+module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler Code Integrity API client.","version":"8.11.0","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <support@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git","directory":"packages/jscrambler-cli"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"license":"MIT","publishConfig":{"access":"public","registry":"https://registry.npmjs.org/"},"engines":{"node":">= 12.17.0"},"dependencies":{"axios":"1.13.5","commander":"^2.8.1","core-js":"3.38.1","filesize-parser":"1.5.0","glob":"13.0.6","http-proxy-agent":"7.0.2","https-proxy-agent":"7.0.4","jszip":"^3.8.0","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","rc":"^1.1.0"},"devDependencies":{"@babel/cli":"^7.23.4","@babel/core":"^7.23.7","@babel/preset-env":"^7.23.8"},"files":["dist","CHANGELOG.md"],"exports":"./dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"},"keywords":["cli","jscrambler","obfuscate","protect","js","javascript"],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"babel -w src --out-dir dist","prepublish":"npm run build","eslint":"eslint src/","eslint:fix":"eslint src/ --fix"}}');
 
 /***/ }),
 

@@ -7508,6 +7508,7 @@ const CLIENT_IDS = exports.CLIENT_IDS = Object.freeze({
   WEBPACK: 2,
   GULP: 3,
   GRUNT: 4,
+  /* @deprecated */
   EMBER: 5,
   METRO: 6
 });
@@ -7517,6 +7518,7 @@ const CLIENT_PACKAGES = exports.CLIENT_PACKAGES = Object.freeze({
   [CLIENT_IDS.WEBPACK]: 'jscrambler-webpack-plugin',
   [CLIENT_IDS.GULP]: 'gulp-jscrambler',
   [CLIENT_IDS.GRUNT]: 'grunt-jscrambler',
+  /* @deprecated */
   [CLIENT_IDS.EMBER]: 'ember-cli-jscrambler',
   [CLIENT_IDS.METRO]: 'jscrambler-metro-plugin'
 });
@@ -7795,6 +7797,7 @@ function buildFinalConfig(configPathOrObject) {
 var _default = exports.Z = {
   Client: _client.default,
   config: _config2.default,
+  resolveOutputPath: _utils.resolveOutputPath,
   queries,
   generateSignedParams: _generateSignedParams.default,
   /**
@@ -9394,6 +9397,7 @@ exports.PREPEND_JS_TYPE = exports.APPEND_JS_TYPE = void 0;
 exports.concatenate = concatenate;
 exports.getMatchedFiles = getMatchedFiles;
 exports.isJavascriptFile = isJavascriptFile;
+exports.resolveOutputPath = resolveOutputPath;
 exports.validateCustomLabels = validateCustomLabels;
 exports.validateNProtections = validateNProtections;
 exports.validateThresholdFn = void 0;
@@ -9516,6 +9520,15 @@ const validateThresholdFn = optionName => val => {
   return inBytes;
 };
 exports.validateThresholdFn = validateThresholdFn;
+function resolveOutputPath(outputPath, filename) {
+  const outputRoot = (0, _path.resolve)(outputPath);
+  const finalPath = (0, _path.resolve)(outputRoot, filename);
+  const relativePath = (0, _path.relative)(outputRoot, finalPath);
+  if (relativePath === '..' || relativePath.indexOf("..".concat(_path.sep)) === 0 || (0, _path.isAbsolute)(relativePath)) {
+    throw new Error("Refusing to write file outside output directory: ".concat(filename));
+  }
+  return finalPath;
+}
 
 /***/ }),
 
@@ -64902,7 +64915,7 @@ module.exports = axios;
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler Code Integrity API client.","version":"8.11.2","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <support@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git","directory":"packages/jscrambler-cli"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"license":"MIT","publishConfig":{"access":"public","registry":"https://registry.npmjs.org/"},"engines":{"node":">= 12.17.0"},"dependencies":{"axios":"1.16.0","commander":"^2.8.1","core-js":"3.38.1","filesize-parser":"1.5.0","glob":"13.0.6","http-proxy-agent":"7.0.2","https-proxy-agent":"7.0.4","jszip":"^3.8.0","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","rc":"^1.1.0"},"devDependencies":{"@babel/cli":"^7.23.4","@babel/core":"^7.23.7","@babel/preset-env":"^7.23.8"},"files":["dist","CHANGELOG.md"],"exports":"./dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"},"keywords":["cli","jscrambler","obfuscate","protect","js","javascript"],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"babel -w src --out-dir dist","prepublish":"npm run build","eslint":"eslint src/","eslint:fix":"eslint src/ --fix"}}');
+module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler Code Integrity API client.","version":"8.11.3","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <support@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git","directory":"packages/jscrambler-cli"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"license":"MIT","publishConfig":{"access":"public","registry":"https://registry.npmjs.org/"},"engines":{"node":">= 12.17.0"},"dependencies":{"axios":"1.16.0","commander":"^2.8.1","core-js":"3.38.1","filesize-parser":"1.5.0","glob":"13.0.6","http-proxy-agent":"7.0.2","https-proxy-agent":"7.0.4","jszip":"^3.8.0","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","rc":"^1.1.0"},"devDependencies":{"@babel/cli":"^7.23.4","@babel/core":"^7.23.7","@babel/preset-env":"^7.23.8"},"files":["dist","CHANGELOG.md"],"exports":"./dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"},"keywords":["cli","jscrambler","obfuscate","protect","js","javascript"],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"babel -w src --out-dir dist","test":"pnpm run build && node test/output-path.js","prepublish":"npm run build","eslint":"eslint src/","eslint:fix":"eslint src/ --fix"}}');
 
 /***/ }),
 

@@ -5123,6 +5123,18 @@ var hasOwn = __nccwpck_require__(8299);
 var populate = __nccwpck_require__(2754);
 
 /**
+ * Escape CR, LF, and `"` in a multipart `name`/`filename` parameter, so a field
+ * name or filename can not break out of its header line to inject headers or
+ * smuggle additional parts. Matches the WHATWG HTML multipart/form-data encoding.
+ *
+ * @param {string} str - the parameter value to escape
+ * @returns {string} the escaped value
+ */
+function escapeHeaderParam(str) {
+  return String(str).replace(/\r/g, '%0D').replace(/\n/g, '%0A').replace(/"/g, '%22');
+}
+
+/**
  * Create readable "multipart/form-data" streams.
  * Can be used to submit forms
  * and file uploads to other web applications.
@@ -5287,7 +5299,7 @@ FormData.prototype._multiPartHeader = function (field, value, options) {
   var contents = '';
   var headers = {
     // add custom disposition as third element or keep it two elements if not
-    'Content-Disposition': ['form-data', 'name="' + field + '"'].concat(contentDisposition || []),
+    'Content-Disposition': ['form-data', 'name="' + escapeHeaderParam(field) + '"'].concat(contentDisposition || []),
     // if no content type. allow it to be empty array
     'Content-Type': [].concat(contentType || [])
   };
@@ -5341,7 +5353,7 @@ FormData.prototype._getContentDisposition = function (value, options) { // eslin
   }
 
   if (filename) {
-    return 'filename="' + filename + '"';
+    return 'filename="' + escapeHeaderParam(filename) + '"';
   }
 };
 
@@ -7157,7 +7169,7 @@ function cleanupInputFields(args, fragments) {
       console.warn("Warning: This API Version does not support the '".concat(field, "' argument."));
     }
   }
-  ['tolerateMinification', 'useProfilingData', 'useAppClassification', 'inputSymbolTable', 'entryPoint', 'ensureCodeAnnotation', 'generateAlias', 'customLabels'].forEach(fieldCleanUp);
+  ['tolerateMinification', 'useProfilingData', 'useAppClassification', 'inputSymbolTable', 'entryPoint', 'ensureCodeAnnotation', 'generateAlias', 'customLabels', 'codeHardening'].forEach(fieldCleanUp);
   return [options, cleanedUpFragments];
 }
 
@@ -7959,6 +7971,7 @@ var _default = exports.Z = {
       clientId,
       tolerateMinification,
       codeHardeningThreshold,
+      codeHardening,
       useProfilingData,
       browsers,
       useAppClassification,
@@ -8014,6 +8027,7 @@ var _default = exports.Z = {
     if (!filesDest && !destCallback) {
       throw new Error('Required *filesDest* not provided');
     }
+    const normalizedCodeHardening = (0, _utils.validateCodeHardening)(codeHardening);
     let source;
     if (!skipSources) {
       const appProfiling = await this.getApplicationProfiling(client, applicationId).catch(e => {
@@ -8053,6 +8067,9 @@ var _default = exports.Z = {
       tolerateMinification,
       codeHardeningThreshold
     };
+    if (typeof normalizedCodeHardening !== 'undefined') {
+      updateData.codeHardening = normalizedCodeHardening;
+    }
     if (params && Object.keys(params).length) {
       updateData.parameters = normalizeParameters(params);
       updateData.areSubscribersOrdered = Array.isArray(params);
@@ -9398,6 +9415,7 @@ exports.concatenate = concatenate;
 exports.getMatchedFiles = getMatchedFiles;
 exports.isJavascriptFile = isJavascriptFile;
 exports.resolveOutputPath = resolveOutputPath;
+exports.validateCodeHardening = validateCodeHardening;
 exports.validateCustomLabels = validateCustomLabels;
 exports.validateNProtections = validateNProtections;
 exports.validateThresholdFn = void 0;
@@ -9407,6 +9425,11 @@ var _fs = _interopRequireDefault(__nccwpck_require__(7147));
 var _path = __nccwpck_require__(1017);
 var _filesizeParser = _interopRequireDefault(__nccwpck_require__(8748));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * Return the list of matched files for minimatch patterns.
  * @param {string} pattern
@@ -9460,6 +9483,22 @@ function validateCustomLabels(customLabels) {
     out[key] = value;
   }
   return out;
+}
+
+/**
+ * Validate protection `codeHardening` is a plain object; API validates contents.
+ * @param {*} codeHardening From config or programmatic options.
+ * @returns {object|undefined} A shallow copy when valid; `undefined` when omitted.
+ * @throws {Error} If `codeHardening` is present but not a plain object.
+ */
+function validateCodeHardening(codeHardening) {
+  if (typeof codeHardening === 'undefined') {
+    return undefined;
+  }
+  if (codeHardening === null || typeof codeHardening !== 'object' || Array.isArray(codeHardening)) {
+    throw new Error('Invalid *codeHardening*: expected a plain object.');
+  }
+  return _objectSpread({}, codeHardening);
 }
 const APPEND_JS_TYPE = exports.APPEND_JS_TYPE = 'append-js';
 const PREPEND_JS_TYPE = exports.PREPEND_JS_TYPE = 'prepend-js';
@@ -64915,7 +64954,7 @@ module.exports = axios;
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler Code Integrity API client.","version":"8.11.3","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <support@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git","directory":"packages/jscrambler-cli"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"license":"MIT","publishConfig":{"access":"public","registry":"https://registry.npmjs.org/"},"engines":{"node":">= 12.17.0"},"dependencies":{"axios":"1.16.0","commander":"^2.8.1","core-js":"3.38.1","filesize-parser":"1.5.0","glob":"13.0.6","http-proxy-agent":"7.0.2","https-proxy-agent":"7.0.4","jszip":"^3.8.0","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","rc":"^1.1.0"},"devDependencies":{"@babel/cli":"^7.23.4","@babel/core":"^7.23.7","@babel/preset-env":"^7.23.8"},"files":["dist","CHANGELOG.md"],"exports":"./dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"},"keywords":["cli","jscrambler","obfuscate","protect","js","javascript"],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"babel -w src --out-dir dist","test":"pnpm run build && node test/output-path.js","prepublish":"npm run build","eslint":"eslint src/","eslint:fix":"eslint src/ --fix"}}');
+module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler Code Integrity API client.","version":"8.12.0","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <support@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git","directory":"packages/jscrambler-cli"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"license":"MIT","publishConfig":{"access":"public","registry":"https://registry.npmjs.org/"},"engines":{"node":">= 12.17.0"},"dependencies":{"axios":"1.16.0","commander":"^2.8.1","core-js":"3.38.1","filesize-parser":"1.5.0","glob":"13.0.6","http-proxy-agent":"7.0.2","https-proxy-agent":"7.0.4","jszip":"^3.8.0","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","rc":"^1.1.0"},"devDependencies":{"@babel/cli":"^7.23.4","@babel/core":"^7.23.7","@babel/preset-env":"^7.23.8"},"files":["dist","CHANGELOG.md"],"exports":"./dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"},"keywords":["cli","jscrambler","obfuscate","protect","js","javascript"],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"babel -w src --out-dir dist","test":"pnpm run build && node test/output-path.js","prepublish":"npm run build","eslint":"eslint src/","eslint:fix":"eslint src/ --fix"}}');
 
 /***/ }),
 

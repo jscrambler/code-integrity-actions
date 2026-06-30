@@ -7219,6 +7219,7 @@ class ClientError extends Error {
  * @param {String} [options.port=443]
  * @param {String} [options.basePath]
  * @param {String} [options.clientId=0]
+ * @param {String} [options.clientVersion]
  * @author Jscrambler
  * @license MIT <http://opensource.org/licenses/MIT>
  */
@@ -7238,12 +7239,14 @@ function JScramblerClient(options) {
   this.options = (0, _lodash.default)(options || {}, _config.default);
   const {
     jscramblerVersion,
-    clientId
+    clientId,
+    clientVersion
   } = this.options;
   this.axiosInstance = _axios.default.create({
     headers: {
       jscramblerVersion,
-      clientId
+      clientId,
+      clientVersion
     },
     transformRequest: _axios.default.defaults.transformRequest.concat(function (data, headers) {
       // gzip request with more than 1KiB
@@ -7476,6 +7479,7 @@ Object.defineProperty(exports, "__esModule", ({
 exports["default"] = void 0;
 var _rc = _interopRequireDefault(__nccwpck_require__(3775));
 var _constants = __nccwpck_require__(2345);
+var _package = __nccwpck_require__(7224);
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 // Load RC configuration if present. Pass `[]` as last argument to avoid
 // getting variables from `argv`.
@@ -7486,6 +7490,7 @@ const config = (0, _rc.default)('jscrambler', {
   jscramblerVersion: 'stable',
   werror: true,
   clientId: _constants.CLIENT_IDS.CLI,
+  clientVersion: _package.version,
   utc: true,
   maxRetries: 5,
   saveSrc: true
@@ -7969,6 +7974,7 @@ var _default = exports.Z = {
       proxy,
       utc,
       clientId,
+      clientVersion,
       tolerateMinification,
       codeHardeningThreshold,
       codeHardening,
@@ -8007,7 +8013,8 @@ var _default = exports.Z = {
       jscramblerVersion,
       proxy,
       utc,
-      clientId
+      clientId,
+      clientVersion
     });
     let filesSrc = finalConfig.filesSrc;
     let filesDest = finalConfig.filesDest;
@@ -8293,7 +8300,8 @@ var _default = exports.Z = {
       proxy,
       utc,
       skipSources,
-      clientId
+      clientId,
+      clientVersion
     } = finalConfig;
     const {
       accessKey,
@@ -8310,7 +8318,8 @@ var _default = exports.Z = {
       jscramblerVersion,
       proxy,
       utc,
-      clientId
+      clientId,
+      clientVersion
     });
     let {
       filesSrc,
@@ -8382,7 +8391,8 @@ var _default = exports.Z = {
       proxy,
       utc,
       jscramblerVersion,
-      clientId
+      clientId,
+      clientVersion
     } = finalConfig;
     const {
       accessKey,
@@ -8399,7 +8409,8 @@ var _default = exports.Z = {
       proxy,
       utc,
       jscramblerVersion,
-      clientId
+      clientId,
+      clientVersion
     });
     const instrumentation = await client.get('/profiling-run', {
       applicationId
@@ -8883,7 +8894,8 @@ var _default = exports.Z = {
       jscramblerVersion,
       proxy,
       utc,
-      clientId
+      clientId,
+      clientVersion
     } = finalConfig;
     const {
       accessKey,
@@ -8900,7 +8912,8 @@ var _default = exports.Z = {
       jscramblerVersion,
       proxy,
       utc,
-      clientId
+      clientId,
+      clientVersion
     });
     const appSource = await (0, _getProtectionDefaultFragments.getIntrospection)(client, 'ApplicationSource');
     if (!appSource.fields.some(_ref6 => {
@@ -8959,7 +8972,8 @@ var _default = exports.Z = {
       jscramblerVersion,
       proxy,
       utc,
-      clientId
+      clientId,
+      clientVersion
     } = finalConfig;
     const {
       accessKey,
@@ -8976,7 +8990,8 @@ var _default = exports.Z = {
       jscramblerVersion,
       proxy,
       utc,
-      clientId
+      clientId,
+      clientVersion
     });
     const balance = await client.get('/balance');
     console.log(balance);
@@ -64954,7 +64969,7 @@ module.exports = axios;
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler Code Integrity API client.","version":"8.12.0","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <support@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git","directory":"packages/jscrambler-cli"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"license":"MIT","publishConfig":{"access":"public","registry":"https://registry.npmjs.org/"},"engines":{"node":">= 12.17.0"},"dependencies":{"axios":"1.16.0","commander":"^2.8.1","core-js":"3.38.1","filesize-parser":"1.5.0","glob":"13.0.6","http-proxy-agent":"7.0.2","https-proxy-agent":"7.0.4","jszip":"^3.8.0","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","rc":"^1.1.0"},"devDependencies":{"@babel/cli":"^7.23.4","@babel/core":"^7.23.7","@babel/preset-env":"^7.23.8"},"files":["dist","CHANGELOG.md"],"exports":"./dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"},"keywords":["cli","jscrambler","obfuscate","protect","js","javascript"],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"babel -w src --out-dir dist","test":"pnpm run build && node test/output-path.js","prepublish":"npm run build","eslint":"eslint src/","eslint:fix":"eslint src/ --fix"}}');
+module.exports = JSON.parse('{"name":"jscrambler","description":"Jscrambler Code Integrity API client.","version":"8.13.0","homepage":"https://github.com/jscrambler/jscrambler","author":"Jscrambler <support@jscrambler.com>","repository":{"type":"git","url":"https://github.com/jscrambler/jscrambler.git","directory":"packages/jscrambler-cli"},"bugs":{"url":"https://github.com/jscrambler/jscrambler/issues"},"license":"MIT","publishConfig":{"access":"public","registry":"https://registry.npmjs.org/"},"engines":{"node":">= 12.17.0"},"dependencies":{"axios":"1.16.0","commander":"^2.8.1","core-js":"3.38.1","filesize-parser":"1.5.0","glob":"13.0.6","http-proxy-agent":"7.0.2","https-proxy-agent":"7.0.4","jszip":"^3.8.0","lodash.clone":"^4.0.3","lodash.clonedeep":"^4.5.0","lodash.defaults":"^4.0.1","lodash.keys":"^4.0.1","lodash.size":"^4.0.1","rc":"^1.1.0"},"devDependencies":{"@babel/cli":"^7.23.4","@babel/core":"^7.23.7","@babel/preset-env":"^7.23.8"},"files":["dist","CHANGELOG.md"],"exports":"./dist/index.js","bin":{"jscrambler":"dist/bin/jscrambler.js"},"keywords":["cli","jscrambler","obfuscate","protect","js","javascript"],"scripts":{"clean":"rm -rf ./dist","build":"babel src --out-dir dist","watch":"babel -w src --out-dir dist","test":"pnpm run build && node test/output-path.js","prepublish":"npm run build","eslint":"eslint src/","eslint:fix":"eslint src/ --fix"}}');
 
 /***/ }),
 

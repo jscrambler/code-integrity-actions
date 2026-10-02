@@ -31,7 +31,6 @@ jobs:
         id: jscrambler
         uses: ./protect
         with:
-          # USER_ID: 19983
           application-id: ${{ secrets.JSCRAMBLER_APPLICATION_ID }}
           secret-key: ${{ secrets.JSCRAMBLER_SECRET_KEY }}
           access-key: ${{ secrets.JSCRAMBLER_ACCESS_KEY }}

@@ -9,7 +9,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
-          node-version: 16
+          node-version: 24
       - name: Install
         run: npm i
       - name: Test
@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
-          node-version: 16
+          node-version: 24
       - name: Install and Build
         run: npm i && npm run build
       - name: Test
@@ -77,3 +77,13 @@ jobs:
           allowUpdates: true
       - name: Send a publish notification
         run: "wget -X POST \"${{ secrets.WEBHOOK_API_URI }}\" --header 'Content-Type: application/json' --post-data '{\"text\": \"Publish code-integrity-actions release ${{ steps.get_version.outputs.version }} to the Marketplace - ${{ steps.release.outputs.html_url }} is waiting approval 🕵️\"}'"
+      - name: Notify release failure
+        if: ${{ failure() }}
+        env:
+          WEBHOOK_URI: ${{ secrets.WEBHOOK_API_URI }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          jq -n --arg text "Release code-integrity-actions failed: $RUN_URL" '{text: $text}' |
+            curl --fail --silent --show-error \
+              --header 'Content-Type: application/json' \
+              --data-binary @- "$WEBHOOK_URI"

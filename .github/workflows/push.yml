@@ -5,11 +5,14 @@ jobs:
     runs-on: ubuntu-latest
     name: Unit Tests
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
-          node-version: 16
+          node-version: 24
+      - name: Setup npm
+        working-directory: ${{ runner.temp }}
+        run: npm install --global npm@11.17.0
       - name: Install
         run: npm i
       - name: Test
@@ -20,18 +23,20 @@ jobs:
     name: Protect e2e Test
     environment: production
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
-          node-version: 16
+          node-version: 24
+      - name: Setup npm
+        working-directory: ${{ runner.temp }}
+        run: npm install --global npm@11.17.0
       - name: Install and Build
         run: npm i && npm run build
       - name: Test
         id: jscrambler
         uses: ./protect
         with:
-          # USER_ID: 19983
           application-id: ${{ secrets.JSCRAMBLER_APPLICATION_ID }}
           secret-key: ${{ secrets.JSCRAMBLER_SECRET_KEY }}
           access-key: ${{ secrets.JSCRAMBLER_ACCESS_KEY }}
@@ -46,17 +51,17 @@ jobs:
         if: "${{ steps.jscrambler.outputs.protection-id == '' }}"
         run: exit 1
       - name: Check Generated Files
-        uses: andstor/file-existence-action@v2
+        uses: andstor/file-existence-action@20b4d2e596410855db8f9ca21e96fbe18e12930b # v2
         with:
           files: "protect/src/utils/__tests__/fixtures-obfuscated/protect/src/utils/__tests__/fixtures/*.js, protect/src/utils/__tests__/fixtures-extra/jscramblerSourceMaps/protect/src/utils/__tests__/fixtures/*.js.map, protect/src/utils/__tests__/fixtures-extra/symbols/*_symbolTable.json"
           fail: true
-      # - name: Upload source maps
-      #  uses: actions/upload-artifact@v3
-      #  with:
-      #    name: source-maps
-      #    path: protect/dist-extra/jscramblerSourceMaps/
-      #    retention-days: 1
-          
+          # - name: Upload source maps
+          #  uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
+          #  with:
+          #    name: source-maps
+          #    path: protect/dist-extra/jscramblerSourceMaps/
+          #    retention-days: 1
+
   release:
     name: Release
     runs-on: ubuntu-latest
@@ -65,24 +70,26 @@ jobs:
     steps:
       - name: Parse Tag
         id: get_version
-        uses: battila7/get-version-action@v2
-      - uses: technote-space/release-github-actions@v8
+        uses: battila7/get-version-action@d97fbc34ceb64d1f5d95f4dfd6dce33521ccccf5 # v2
+      - uses: technote-space/release-github-actions@052f205daf62dff0c3ece009f07b38f3ec83e01a # v8
         with:
           COMMIT_MESSAGE: Built with Jscrambler ${{ steps.get_version.outputs.version }}
           DELETE_NODE_MODULES: true
           CLEAN_TARGETS: ".[!.]*,__tests__,docs,**/src,*.[jt]s,*.[mc][jt]s,jscrambler.json,tsconfig.json,package-lock.json,*.lock,*.yml,*.yaml"
-      - uses: ncipollo/release-action@v1
+      - uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1
         id: release
         with:
           draft: true
           allowUpdates: true
-      - name: Send mail
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: ${{ secrets.MAIL_SMTP }}
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "[Action Required] Publish release ${{ steps.get_version.outputs.version }}"
-          to: code@jscrambler.com
-          from: "code-integrity-actions"
-          body: "Publish code-integrity-actions release ${{ steps.get_version.outputs.version }} to the Marketplace - ${{ steps.release.outputs.html_url }}"
+      - name: Send a publish notification
+        run: "wget -X POST \"${{ secrets.WEBHOOK_API_URI }}\" --header 'Content-Type: application/json' --post-data '{\"text\": \"Publish code-integrity-actions release ${{ steps.get_version.outputs.version }} to the Marketplace - ${{ steps.release.outputs.html_url }} is waiting approval 🕵️\"}'"
+      - name: Notify release failure
+        if: ${{ failure() }}
+        env:
+          WEBHOOK_URI: ${{ secrets.WEBHOOK_API_URI }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          jq -n --arg text "Release code-integrity-actions failed: $RUN_URL" '{text: $text}' |
+            curl --fail --silent --show-error \
+              --header 'Content-Type: application/json' \
+              --data-binary @- "$WEBHOOK_URI"

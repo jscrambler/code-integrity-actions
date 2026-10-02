@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "Protect your JavaScript application against automated abuse, piracy, tampering, and code theft with enterprise-grade obfuscation, code locks, and self-defensive techniques",
   "scripts": {
-    "build": "find . -mindepth 2 -name action.yml -exec echo '** Build {} **' \\; -execdir ncc build src/index.ts --license licenses.txt -o dist \\;",
+    "build": "find . -name node_modules -prune -o -path './*/action.yml' -exec echo '** Build {} **' \\; -execdir ncc build src/index.ts --license licenses.txt -o dist \\;",
     "test": "jest"
   },
   "author": "Jscrambler <code@jscrambler.com>",

@@ -17,6 +17,17 @@ jobs:
         run: npm i
       - name: Test
         run: npm t
+      - name: Notify release failure
+        if: ${{ failure() }}
+        env:
+          WEBHOOK_URI: ${{ secrets.WEBHOOK_API_URI }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          jq -n --arg text "Unit-test of code-integrity-actions failed: $RUN_URL" '{text: $text}' |
+            curl --fail --silent --show-error \
+              --header 'Content-Type: application/json' \
+              --data-binary @- "$WEBHOOK_URI"
+
 
   protect-e2e-tests:
     runs-on: ubuntu-latest
@@ -61,36 +72,58 @@ jobs:
           #    name: source-maps
           #    path: protect/dist-extra/jscramblerSourceMaps/
           #    retention-days: 1
-
-  release:
-    name: Release
-    runs-on: ubuntu-latest
-    needs: [ unit-tests, protect-e2e-tests ]
-    # if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Parse Tag
-        id: get_version
-        uses: battila7/get-version-action@d97fbc34ceb64d1f5d95f4dfd6dce33521ccccf5 # v2
-      - uses: technote-space/release-github-actions@052f205daf62dff0c3ece009f07b38f3ec83e01a # v8
-        with:
-          COMMIT_MESSAGE: Built with Jscrambler ${{ steps.get_version.outputs.version }}
-          DELETE_NODE_MODULES: true
-          CLEAN_TARGETS: ".[!.]*,__tests__,docs,**/src,*.[jt]s,*.[mc][jt]s,jscrambler.json,tsconfig.json,package-lock.json,*.lock,*.yml,*.yaml"
-      - uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1
-        id: release
-        with:
-          tag: "v${{ steps.get_version.outputs.version }}"
-          draft: true
-          allowUpdates: true
-      - name: Send a publish notification
-        run: "wget -X POST \"${{ secrets.WEBHOOK_API_URI }}\" --header 'Content-Type: application/json' --post-data '{\"text\": \"Publish code-integrity-actions release ${{ steps.get_version.outputs.version }} to the Marketplace - ${{ steps.release.outputs.html_url }} is waiting approval 🕵️\"}'"
       - name: Notify release failure
         if: ${{ failure() }}
         env:
           WEBHOOK_URI: ${{ secrets.WEBHOOK_API_URI }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          jq -n --arg text "Release code-integrity-actions failed: $RUN_URL" '{text: $text}' |
+          jq -n --arg text "E2E tests of code-integrity-actions failed: $RUN_URL" '{text: $text}' |
             curl --fail --silent --show-error \
               --header 'Content-Type: application/json' \
               --data-binary @- "$WEBHOOK_URI"
+
+
+  create-tag:
+    name: Create Jscrambler Version Tag
+    runs-on: ubuntu-latest
+    needs: [ unit-tests, protect-e2e-tests ]
+    # if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Get Access Token
+        id: get_workflow_token
+        uses: peter-murray/workflow-application-token-action@dad2b81e50ce3edeb5f3b7ffbd79f731368bd668
+        with:
+          application_id: ${{ secrets.CODE_INTEGRITY_ACTIONS_APP_ID }}
+          application_private_key: ${{ secrets.CODE_INTEGRITY_ACTIONS_PRIVATE_KEY }}
+      - name: Checkout Code Integrity Actions Repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: jscrambler/code-integrity-actions
+          token: ${{ steps.get_workflow_token.outputs.token }}
+          ref: ${{ github.sha }}
+      - name: Get Jscrambler CLI Version
+        id: repository_type
+        uses: ActionsTools/read-json-action@9750aa7419d36b6bdc275883f2ecb4d2fdf0db2c # main
+        with:
+          file_path: "package.json"
+          prop_path: "dependencies.jscrambler"
+      - name: Create and Push Version Tag
+        uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b # v6.2
+        with:
+          github_token: ${{ steps.get_workflow_token.outputs.token }}
+          custom_tag: ${{ steps.repository_type.outputs.value }}
+          tag_prefix: v
+          release_branches: main
+          fetch_all_tags: true
+      - name: Notify release failure
+        if: ${{ failure() }}
+        env:
+          WEBHOOK_URI: ${{ secrets.WEBHOOK_API_URI }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          jq -n --arg text "Create git tag on code-integrity-actions failed: $RUN_URL" '{text: $text}' |
+            curl --fail --silent --show-error \
+              --header 'Content-Type: application/json' \
+              --data-binary @- "$WEBHOOK_URI"
+

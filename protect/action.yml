@@ -60,5 +60,5 @@ outputs:
   protection-id:
     description: 'Protection Id'
 runs:
-  using: 'node16'
+  using: 'node24'
   main: 'dist/index.js'

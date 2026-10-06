@@ -1,0 +1,37 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Parse Tag
+        id: get_version
+        uses: battila7/get-version-action@d97fbc34ceb64d1f5d95f4dfd6dce33521ccccf5 # v2
+      - uses: technote-space/release-github-actions@052f205daf62dff0c3ece009f07b38f3ec83e01a # v8
+        with:
+          COMMIT_MESSAGE: Built with Jscrambler ${{ steps.get_version.outputs.version }}
+          DELETE_NODE_MODULES: true
+          CLEAN_TARGETS: ".[!.]*,__tests__,docs,**/src,*.[jt]s,*.[mc][jt]s,jscrambler.json,tsconfig.json,package-lock.json,*.lock,*.yml,*.yaml"
+      - uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1
+        id: release
+        with:
+          draft: true
+          allowUpdates: true
+      - name: Send a publish notification
+        run: "wget -X POST \"${{ secrets.WEBHOOK_API_URI }}\" --header 'Content-Type: application/json' --post-data '{\"text\": \"Publish code-integrity-actions release ${{ steps.get_version.outputs.version }} to the Marketplace - ${{ steps.release.outputs.html_url }} is waiting approval 🕵️\"}'"
+      - name: Notify release failure
+        if: ${{ failure() }}
+        env:
+          WEBHOOK_URI: ${{ secrets.WEBHOOK_API_URI }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          jq -n --arg text "Release code-integrity-actions failed: $RUN_URL" '{text: $text}' |
+            curl --fail --silent --show-error \
+              --header 'Content-Type: application/json' \
+              --data-binary @- "$WEBHOOK_URI"

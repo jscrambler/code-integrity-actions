@@ -88,7 +88,7 @@ jobs:
     name: Create Jscrambler Version Tag
     runs-on: ubuntu-latest
     needs: [ unit-tests, protect-e2e-tests ]
-    # if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Get Access Token
         id: get_workflow_token
@@ -109,6 +109,7 @@ jobs:
           file_path: "package.json"
           prop_path: "dependencies.jscrambler"
       - uses: technote-space/release-github-actions@052f205daf62dff0c3ece009f07b38f3ec83e01a # v8
+        name: Build github action assets
         with:
           CREATE_MAJOR_VERSION_TAG: false
           CREATE_MINOR_VERSION_TAG: false

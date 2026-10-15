@@ -17,8 +17,18 @@ jobs:
       - name: Mock Version
         id: get_version
         run: echo "version=8.22.1" >> "$GITHUB_OUTPUT"
+      - name: Get Access Token
+        id: get_workflow_token
+        uses: peter-murray/workflow-application-token-action@dad2b81e50ce3edeb5f3b7ffbd79f731368bd668
+        with:
+          application_id: ${{ secrets.CODE_INTEGRITY_ACTIONS_APP_ID }}
+          application_private_key: ${{ secrets.CODE_INTEGRITY_ACTIONS_PRIVATE_KEY }}
       - uses: technote-space/release-github-actions@052f205daf62dff0c3ece009f07b38f3ec83e01a # v8
         with:
+          CREATE_MAJOR_VERSION_TAG: false
+          CREATE_MINOR_VERSION_TAG: false
+          CREATE_PATCH_VERSION_TAG: false
+          GITHUB_TOKEN: ${{ steps.get_workflow_token.outputs.token }}
           COMMIT_MESSAGE: Built with Jscrambler ${{ steps.get_version.outputs.version }}
           DELETE_NODE_MODULES: true
           CLEAN_TARGETS: ".[!.]*,__tests__,docs,**/src,*.[jt]s,*.[mc][jt]s,jscrambler.json,tsconfig.json,package-lock.json,*.lock,*.yml,*.yaml"
@@ -27,6 +37,7 @@ jobs:
         with:
           draft: true
           allowUpdates: true
+          token: ${{ steps.get_workflow_token.outputs.token }}
           tag: v${{ steps.get_version.outputs.version }}
       - name: Send a publish notification
         run: "wget -X POST \"${{ secrets.WEBHOOK_API_URI }}\" --header 'Content-Type: application/json' --post-data '{\"text\": \"Publish code-integrity-actions release ${{ steps.get_version.outputs.version }} to the Marketplace - ${{ steps.release.outputs.html_url }} is waiting approval 🕵️\"}'"

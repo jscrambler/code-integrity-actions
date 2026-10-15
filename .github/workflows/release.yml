@@ -1,18 +1,22 @@
 name: Release
 
-on:
-  push:
-    tags:
-      - "v*"
+on: [push]
+#on:
+#  push:
+#    tags:
+#      - "v*"
 
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
     steps:
-      - name: Parse Tag
+#      - name: Parse Tag
+#        id: get_version
+#        uses: battila7/get-version-action@d97fbc34ceb64d1f5d95f4dfd6dce33521ccccf5 # v2
+      - name: Mock Version
         id: get_version
-        uses: battila7/get-version-action@d97fbc34ceb64d1f5d95f4dfd6dce33521ccccf5 # v2
+        run: echo "version=8.22.1" >> "$GITHUB_OUTPUT"
       - uses: technote-space/release-github-actions@052f205daf62dff0c3ece009f07b38f3ec83e01a # v8
         with:
           COMMIT_MESSAGE: Built with Jscrambler ${{ steps.get_version.outputs.version }}

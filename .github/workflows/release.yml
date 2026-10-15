@@ -27,6 +27,7 @@ jobs:
         with:
           draft: true
           allowUpdates: true
+          tag: v${{ steps.get_version.outputs.version }}
       - name: Send a publish notification
         run: "wget -X POST \"${{ secrets.WEBHOOK_API_URI }}\" --header 'Content-Type: application/json' --post-data '{\"text\": \"Publish code-integrity-actions release ${{ steps.get_version.outputs.version }} to the Marketplace - ${{ steps.release.outputs.html_url }} is waiting approval 🕵️\"}'"
       - name: Notify release failure

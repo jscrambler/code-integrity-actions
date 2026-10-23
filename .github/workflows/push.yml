@@ -108,16 +108,6 @@ jobs:
         with:
           file_path: "package.json"
           prop_path: "dependencies.jscrambler"
-      - uses: technote-space/release-github-actions@052f205daf62dff0c3ece009f07b38f3ec83e01a # v8
-        name: Build github action assets
-        with:
-          CREATE_MAJOR_VERSION_TAG: false
-          CREATE_MINOR_VERSION_TAG: false
-          CREATE_PATCH_VERSION_TAG: false
-          GITHUB_TOKEN: ${{ steps.get_workflow_token.outputs.token }}
-          COMMIT_MESSAGE: Built with Jscrambler ${{ steps.get_version.outputs.version }}
-          DELETE_NODE_MODULES: true
-          CLEAN_TARGETS: ".[!.]*,__tests__,docs,**/src,*.[jt]s,*.[mc][jt]s,jscrambler.json,tsconfig.json,package-lock.json,*.lock,*.yml,*.yaml"
       - name: Create and Push Version Tag
         uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b # v6.2
         with:

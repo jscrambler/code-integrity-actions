@@ -19,6 +19,13 @@ jobs:
         with:
           application_id: ${{ secrets.CODE_INTEGRITY_ACTIONS_APP_ID }}
           application_private_key: ${{ secrets.CODE_INTEGRITY_ACTIONS_PRIVATE_KEY }}
+      - uses: technote-space/release-github-actions@052f205daf62dff0c3ece009f07b38f3ec83e01a # v8
+        name: Build github action assets
+        with:
+          GITHUB_TOKEN: ${{ steps.get_workflow_token.outputs.token }}
+          COMMIT_MESSAGE: Built with Jscrambler ${{ steps.get_version.outputs.version }}
+          DELETE_NODE_MODULES: true
+          CLEAN_TARGETS: ".[!.]*,__tests__,docs,**/src,*.[jt]s,*.[mc][jt]s,jscrambler.json,tsconfig.json,package-lock.json,*.lock,*.yml,*.yaml"
       - uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1
         id: release
         with:
